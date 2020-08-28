@@ -186,7 +186,7 @@ class ReplayBuffer:
 
 
 def train(agent,
-    n_episodes=2000, max_t=500, eps_start=1.0, eps_end=0.01, eps_decay=0.995,
+    n_episodes=4000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995,
     savename="dqn.pth"):
     """Deep Q-Learning.
 
