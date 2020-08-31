@@ -63,6 +63,7 @@ def main():
                 state_x.append(state[0])
                 state_y.append(state[1]) 
 
+                # Plot only half of the action delays
                 if (episode < 5) and (i%2 == 0):
                     axs[p_row,p_col].plot(state_x, state_y)
                     axs[p_row,p_col].axis([-0.75, 0.75, 0, 1.6])
@@ -96,6 +97,8 @@ def main():
     #print(scores)
     #print("mean score: ", np.mean(np.array(scores)))
     #print("std score: ", np.std(np.array(scores)))
+
+    # Plots for rewards and landings
     f2, axs = plt.subplots(2)
     f2.suptitle('Mean reward and successful landings after ' + str(episodes) + ' episodes')
     axs[0].bar(t_delay, scores)
