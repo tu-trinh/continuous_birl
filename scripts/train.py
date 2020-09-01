@@ -206,7 +206,8 @@ def train(agent,
         state = env.reset()
         score = 0
         for t in range(max_t):
-            action = agent.act(state, eps)
+            if(t%6 == 0):
+                action = agent.act(state, eps)
             # env.render()                # toggle this line to visualize training
             next_state, reward, done, _ = env.step(action)
             agent.step(state, action, reward, next_state, done)
@@ -229,10 +230,10 @@ if __name__ == "__main__":
     env = gym.make("LunarLander-v2")
     env.seed(0)
     agent = Agent(state_size=8, action_size=4, seed=0)
-    scores = train(agent, savename="dqn.pth")
+    scores = train(agent, savename="dqn_randx.pth")
 
     # load the weights from file
-    agent.qnetwork_local.load_state_dict(torch.load('dqn.pth'))
+    agent.qnetwork_local.load_state_dict(torch.load('dqn_randx.pth'))
 
     for i in range(3):
         state = env.reset()

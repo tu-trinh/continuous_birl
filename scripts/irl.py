@@ -1,9 +1,9 @@
+# Script to run Inverse Reinforcement Learning for Lunar Lander
 import gym
 import torch
 import numpy as np
 from train import QNetwork
 import matplotlib.pyplot as plt
-
 
 def main():
 
@@ -16,8 +16,8 @@ def main():
     qnetwork.eval()
     softmax = torch.nn.Softmax(dim=1)
 
-    # we'll rollout over N episodes
-    episodes = 1000
+    # we'll rollout over N demonstrations
+    demos = 5
 
     ''' Calculate Rewards over multiple delays
         The action delay is calculated as timestep % delay_factor
@@ -53,6 +53,7 @@ def main():
                         action_values = qnetwork(state_t)
                         action_values = softmax(action_values).cpu().data.numpy()[0]
                     action = np.argmax(action_values)
+                    #print(action)
 
                 # apply that action and take a step
                 #env.render()              # can always toggle visualization
@@ -64,7 +65,7 @@ def main():
                 state_y.append(state[1]) 
 
                 # Plot only half of the action delays
-                if (episode < 5) and (i%2 == 0):
+                if (episode < 15) and (i%2 == 0):
                     axs[p_row,p_col].plot(state_x, state_y)
                     axs[p_row,p_col].axis([-0.75, 0.75, 0, 1.6])
                     axs[p_row,p_col].text(0,1.55,'Action Delay: ' + str(t_delay[i]),
