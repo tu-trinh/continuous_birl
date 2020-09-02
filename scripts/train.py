@@ -230,10 +230,10 @@ if __name__ == "__main__":
     env = gym.make("LunarLander-v2")
     env.seed(0)
     agent = Agent(state_size=8, action_size=4, seed=0)
-    scores = train(agent, savename="dqn_randx.pth")
+    scores = train(agent, savename="../models/dqn_land_anywhere.pth")
 
     # load the weights from file
-    agent.qnetwork_local.load_state_dict(torch.load('dqn_randx.pth'))
+    agent.qnetwork_local.load_state_dict(torch.load('../models/dqn_land_anywhere.pth'))
 
     for i in range(3):
         state = env.reset()
