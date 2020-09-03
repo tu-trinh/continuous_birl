@@ -35,7 +35,7 @@ def main():
     for i in range(len(t_delay)):
         score = 0
         landing = 0
-        print("Starting lunar lander with action delay: ", t_delay[i])        
+        print("Starting lunar lander with action delay: ", t_delay[i])
         for episode in range(episodes):
             if (episode%50 == 0):
                 print("On episode: ", episode)
@@ -62,7 +62,7 @@ def main():
                 score += reward
                 episode_reward += reward
                 state_x.append(state[0])
-                state_y.append(state[1]) 
+                state_y.append(state[1])
 
                 # Plot only half of the action delays
                 if (episode < 15) and (i%2 == 0):
@@ -91,7 +91,7 @@ def main():
         #print(score)
         #plt.plot(state_x,state_y)
         #plt.axis([-0.75, 0.75, 0, 1.6])
-        
+
 
     # give some idea of how things went
     env.close()
