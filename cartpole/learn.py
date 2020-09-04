@@ -42,31 +42,8 @@ def Rtilt(xi):
     return R / 200
 
 
-
-def main():
-
-    #import trajectories (that could be choices)
-    D = pickle.load( open( "demo.pkl", "rb" ) )
-    E = pickle.load( open( "easy.pkl", "rb" ) )
-    DstarUP = pickle.load( open( "demo0.pkl", "rb" ) )
-    DstarTILT = pickle.load( open( "demo1.pkl", "rb" ) )
-    DstarLEFT = pickle.load( open( "demo2.pkl", "rb" ) )
-    DstarRIGHT = pickle.load( open( "demo3.pkl", "rb" ) )
-
-    #build choice set --- default includes demonstrations and easy simplifications
-    Xi_R = D + E
-
-    #optionally, you can also include optimal trajectories for each reward function.
-    #if the human had no limitations, we would expect them to show one of these!
-    # Xi_R += DstarUP
-    # Xi_R += DstarRIGHT
-    # Xi_R += DstarLEFT
-    # Xi_R += DstarTILT
-
-    #rationality constant. Increasing makes different terms dominate
-    beta = 20
-
-    #bayesian inference for each reward given demonstrations and choice set
+#bayesian inference for each reward given demonstrations and choice set
+def get_belief(beta, D, Xi_R):
 
     #reward for keeping pole vertical
     n1 = np.exp(beta*sum([Rup(xi) for xi in D]))
@@ -92,6 +69,33 @@ def main():
     Z = p1 + p2 + p3 + p4
     b = [p1/Z, p2/Z, p3/Z, p4/Z]
     print("Belief: ", b)
+
+
+def main():
+
+    #import trajectories (that could be choices)
+    D = pickle.load( open( "demo.pkl", "rb" ) )
+    E = pickle.load( open( "easy.pkl", "rb" ) )
+    DstarUP = pickle.load( open( "demo0.pkl", "rb" ) )
+    DstarTILT = pickle.load( open( "demo1.pkl", "rb" ) )
+    DstarLEFT = pickle.load( open( "demo2.pkl", "rb" ) )
+    DstarRIGHT = pickle.load( open( "demo3.pkl", "rb" ) )
+
+    #build choice set --- default includes demonstrations and easy simplifications
+    Xi_R = D + E
+
+    #optionally, you can also include optimal trajectories for each reward function.
+    #if the human had no limitations, we would expect them to show one of these!
+    Xi_R += DstarUP
+    Xi_R += DstarRIGHT
+    Xi_R += DstarLEFT
+    Xi_R += DstarTILT
+
+    #rationality constant. Increasing makes different terms dominate
+    for beta in [0, 0.1, 1, 5]:
+        get_belief(beta, D, Xi_R)
+
+
 
 
 if __name__ == "__main__":

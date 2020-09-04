@@ -32,7 +32,7 @@ def main():
         action = 0
         for t in range(500):
 
-            # print(stoptime, t, action)
+            print(stoptime, t, action)
 
             if t < stoptime and t%t_delay == 0:
                 with torch.no_grad():
@@ -42,7 +42,7 @@ def main():
                 action = np.argmax(action_values)
             # action = 1
 
-            # env.render()              # can always toggle visualization
+            env.render()              # can always toggle visualization
             xi.append([t] + [action] + list(state))
             next_state, _, done, _ = env.step(action)
             state = next_state
