@@ -12,7 +12,7 @@ def main():
 
     # load our trained q-network
     qnetwork = QNetwork(state_size=8, action_size=4, seed=1)
-    qnetwork.load_state_dict(torch.load("../models/dqn_land_anywhere.pth"))
+    qnetwork.load_state_dict(torch.load("../models/dqn.pth"))
     qnetwork.eval()
     softmax = torch.nn.Softmax(dim=1)
 
@@ -22,7 +22,7 @@ def main():
     ''' Calculate Rewards over multiple delays
         The action delay is calculated as timestep % delay_factor
     '''
-    t_delay = range(1,16)
+    t_delay = range(1,17)
     scores = [None] * len(t_delay)
     landings = [None] * len(t_delay)
 
