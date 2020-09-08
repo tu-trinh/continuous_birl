@@ -40,7 +40,7 @@ def main():
             if (episode%50 == 0):
                 print("On episode: ", episode)
             # reset to start
-            state = env.reset()
+            #state = env.reset()
             state_x = []
             state_y = []
             episode_reward = 0
