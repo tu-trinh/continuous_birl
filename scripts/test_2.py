@@ -16,7 +16,7 @@ def main():
     
 
     t_delay_2 = [delay + width for delay in t_delay]
-    for iteration in range(1):
+    for iteration in range(2):
         # load environment
         env = gym.make('LunarLander-v2')
 
@@ -27,18 +27,7 @@ def main():
         softmax = torch.nn.Softmax(dim=1)
 
         # we'll rollout over N episodes
-        episodes = 250
-
-        ''' Calculate Rewards over multiple delays
-            The action delay is calculated as timestep % delay_factor
-        '''
-
-
-        # Trajectory Plotting
-        # f1, axs = plt.subplots(nrows=2, ncols=int(len(t_delay)/4), figsize=(20, 15))
-        # f1.suptitle('Sample trajectories w.r.t action delay')
-        # p_row = 0
-        # p_col = 0
+        episodes = 500
 
         # R1 and R2 with R1 reward plotting
 
@@ -53,6 +42,10 @@ def main():
                     print("On episode: ", episode)
                 # reset to start
                 state = env.reset()
+                
+                if(iteration == 1):
+                    env.set_custom_reward(True)
+                    
                 state_x = []
                 state_y = []
                 episode_reward = 0
@@ -80,14 +73,6 @@ def main():
                     state_x.append(state[0])
                     state_y.append(state[1])
 
-                    # Plot only half of the action delays
-                    # if (episode < 15) and (i%2 == 0):
-                    #     axs[p_row,p_col].plot(state_x, state_y)
-                    #     axs[p_row,p_col].axis([-0.75, 0.75, 0, 1.6])
-                    #     axs[p_row,p_col].text(0,1.55,'Action Delay: ' + str(t_delay[i]),
-                    #                             horizontalalignment='center')
-                        #axs[0].set(xlabel='Action Delay', ylabel='Mean Reward')
-                        #axs[0].axhline(lw=1, color='black')
                     if done:
                         if (episode_reward > 100):
                             landing += 1
@@ -98,25 +83,16 @@ def main():
             landings[i] = landing
             print("Mean reward for completed iteration: ", scores[i])
 
-            # if(i%2 == 0):
-            #     if (p_col < (len(t_delay)/4)-1):
-            #         p_col += 1
-            #     else:
-            #         p_col = 0
-            #         p_row += 1
-
-            #print(score)
-            #plt.plot(state_x,state_y)
-            #plt.axis([-0.75, 0.75, 0, 1.6])
-
-
             # give some idea of how things went
             env.close()
-            
-    
-    p1 = ax.bar(t_delay, scores, width, bottom=0)
-    p2 = ax.bar(t_delay_2, modified_scores, width, bottom=0)
-    ax.set_title('Mean reward for R1 network wrt to R1 and R2 rewards')
+
+        if(iteration == 0):
+            p1 = ax.bar(t_delay, scores, width, bottom=0)
+        else:
+            p2 = ax.bar(t_delay_2, scores, width, bottom=0)
+
+    ax.set_title('Mean reward for R1 network wrt to R1 and R2 rewards after ' 
+        + str(episodes) + ' episodes')
     #t_delay_2 = [delay/2 for delay in t_delay_2]
     ax.set_xticks(t_delay_2)
     ax.set_xticklabels(t_delay)
