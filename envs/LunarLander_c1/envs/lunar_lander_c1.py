@@ -78,7 +78,7 @@ class ContactDetector(contactListener):
                 self.env.legs[i].ground_contact = False
 
 
-class LunarLander(gym.Env, EzPickle):
+class LunarLanderC1(gym.Env, EzPickle):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : FPS
@@ -411,7 +411,7 @@ class LunarLander(gym.Env, EzPickle):
         self.custom_reward = status
 
 
-class LunarLanderContinuous(LunarLander):
+class LunarLanderContinuous(LunarLanderC1):
     continuous = True
 
 def heuristic(env, s):
