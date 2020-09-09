@@ -21,7 +21,7 @@ def main():
     softmax = torch.nn.Softmax(dim=1)
 
     episodes = 20
-    t_delay = 2
+    t_delay = 8
     dataname = 'demo_test.pkl'
     dataset = []
 

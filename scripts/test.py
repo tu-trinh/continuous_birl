@@ -3,6 +3,7 @@ import torch
 import numpy as np
 from train import QNetwork
 import matplotlib.pyplot as plt
+import LunarLander_c1
 
 
 def main():
@@ -18,7 +19,7 @@ def main():
     t_delay_2 = [delay + width for delay in t_delay]
     for iteration in range(1):
         # load environment
-        env = gym.make('LunarLander-v2')
+        env = gym.make('LunarLanderC1-v0')
 
         # load our trained q-network
         qnetwork = QNetwork(state_size=8, action_size=4, seed=1)
@@ -27,7 +28,7 @@ def main():
         softmax = torch.nn.Softmax(dim=1)
 
         # we'll rollout over N episodes
-        episodes = 250
+        episodes = 1
 
         ''' Calculate Rewards over multiple delays
             The action delay is calculated as timestep % delay_factor
@@ -69,7 +70,7 @@ def main():
                         #print(action)
 
                     # apply that action and take a step
-                    #env.render()              # can always toggle visualization
+                    env.render()              # can always toggle visualization
                     next_state, reward, done, info = env.step(action)
                     modified_reward = env.get_modified_reward()
                     state = next_state
