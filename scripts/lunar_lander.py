@@ -95,7 +95,7 @@ class LunarLander(gym.Env, EzPickle):
         self.moon = None
         self.lander = None
         self.particles = []
-
+        self.custom_reward = False
         self.prev_reward = None
         self.modified_reward = 0
         
@@ -334,7 +334,7 @@ class LunarLander(gym.Env, EzPickle):
                                                                  # lose contact again after landing, you get negative reward
 
         if self.custom_reward:
-            shaping = modified_reward
+            shaping = modified_shaping
 
         if self.prev_shaping is not None:
             reward = shaping - self.prev_shaping
@@ -408,7 +408,7 @@ class LunarLander(gym.Env, EzPickle):
         return self.modified_reward
 
     def set_custom_reward(self,status):
-        return self.custom_reward = status
+        self.custom_reward = status
 
 
 class LunarLanderContinuous(LunarLander):
