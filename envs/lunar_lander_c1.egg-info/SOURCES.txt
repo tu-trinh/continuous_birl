@@ -1,7 +1,0 @@
-README.md
-setup.py
-lunar_lander_c1.egg-info/PKG-INFO
-lunar_lander_c1.egg-info/SOURCES.txt
-lunar_lander_c1.egg-info/dependency_links.txt
-lunar_lander_c1.egg-info/requires.txt
-lunar_lander_c1.egg-info/top_level.txt
