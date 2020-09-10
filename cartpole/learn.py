@@ -82,14 +82,14 @@ def main():
     DstarRIGHT = pickle.load( open( "demo3.pkl", "rb" ) )
 
     #build choice set --- default includes demonstrations and easy simplifications
-    Xi_R = D + E
+    #Xi_R = D + E
 
     #optionally, you can also include optimal trajectories for each reward function.
     #if the human had no limitations, we would expect them to show one of these!
-    # Xi_R += DstarUP
-    # Xi_R += DstarRIGHT
-    # Xi_R += DstarLEFT
-    # Xi_R += DstarTILT
+    #Xi_R = DstarUP
+    #Xi_R += DstarRIGHT
+    #Xi_R += DstarLEFT
+    #Xi_R += DstarTILT
 
     #rationality constant. Increasing makes different terms dominate
     for beta in [0, 0.1, 1, 5]:

@@ -22,7 +22,7 @@ def main():
 
     episodes = 20
     t_delay = 8
-    dataname = 'demo.pkl'
+    dataname = 'demo_test.pkl'
     dataset = []
 
     for episode in range(episodes):
