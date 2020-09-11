@@ -2,4 +2,4 @@
 __pycache__/*
 /scripts/__pycache__/*
 /envs/LunarLander_c1.egg-info/*
-/envs/LunarLander_c1/__pycache__
+/envs/LunarLander_c1/__pycache__/*

@@ -28,7 +28,7 @@ def main():
         softmax = torch.nn.Softmax(dim=1)
 
         # we'll rollout over N episodes
-        episodes = 1
+        episodes = 250
 
         ''' Calculate Rewards over multiple delays
             The action delay is calculated as timestep % delay_factor
@@ -70,9 +70,12 @@ def main():
                         #print(action)
 
                     # apply that action and take a step
-                    env.render()              # can always toggle visualization
-                    next_state, reward, done, info = env.step(action)
-                    modified_reward = env.get_modified_reward()
+                    #env.render()              # can always toggle visualization
+
+                    next_state, _, done, info = env.step(action)
+                    reward = info['reward']
+                    modified_reward = info['mod_reward']
+                    #modified_reward = env.get_modified_reward()
                     state = next_state
                     score += reward
                     modified_score += modified_reward
@@ -117,7 +120,8 @@ def main():
     
     p1 = ax.bar(t_delay, scores, width, bottom=0)
     p2 = ax.bar(t_delay_2, modified_scores, width, bottom=0)
-    ax.set_title('Mean reward for R1 network wrt to R1 and R2 rewards')
+    ax.set_title('Mean reward for R1 network wrt to R1 and R2 rewards after ' 
+        + str(episodes) + ' episodes')
     #t_delay_2 = [delay/2 for delay in t_delay_2]
     ax.set_xticks(t_delay_2)
     ax.set_xticklabels(t_delay)
