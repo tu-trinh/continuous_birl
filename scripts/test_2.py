@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from train import QNetwork
 import matplotlib.pyplot as plt
-
+import LunarLander_c1
 
 def main():
     
@@ -18,7 +18,7 @@ def main():
     t_delay_2 = [delay + width for delay in t_delay]
     for iteration in range(2):
         # load environment
-        env = gym.make('LunarLander-v2')
+        env = gym.make('LunarLanderC1-v0')
 
         # load our trained q-network
         qnetwork = QNetwork(state_size=8, action_size=4, seed=1)
@@ -27,7 +27,7 @@ def main():
         softmax = torch.nn.Softmax(dim=1)
 
         # we'll rollout over N episodes
-        episodes = 500
+        episodes = 1
 
         # R1 and R2 with R1 reward plotting
 
