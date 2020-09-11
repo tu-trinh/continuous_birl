@@ -354,12 +354,15 @@ class LunarLanderC1(gym.Env, EzPickle):
         if self.game_over or abs(state[0]) >= 1.0:
             done = True
             reward = -100
+            mod_reward = -100
         if not self.lander.awake:
             done = True
             reward = +100
+            mod_reward = +100
 
         self.modified_reward = mod_reward
-        return np.array(state, dtype=np.float32), reward, done, {}
+        return np.array(state, dtype=np.float32), reward,\
+                 done, {'reward':reward, 'mod_reward':mod_reward}
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering
