@@ -1,78 +1,112 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
-import random
+import copy
+from scipy.optimize import minimize
+from scipy.optimize import LinearConstraint
 
 
-"""Code used to collect demonstrations"""
+# hyperparameters
+n = 21
+vision_radius = 0.3
 
+
+""" get optimal trajectory using constrained optimization """
+def get_optimal(theta, lava):
+
+    xi0 = np.zeros((n,2))
+    xi0[:,0] = np.linspace(0, 1, n)
+    xi0[:,1] = np.linspace(0, 1, n)
+    xi0 = xi0.reshape(-1)
+    B = np.zeros((4,n*2))
+    B[0,0] = 1
+    B[1,1] = 1
+    B[2,-2] = 1
+    B[3,-1] = 1
+
+    def trajcost(xi, theta, lava, n):
+        xi = xi.reshape(n,2)
+        smoothcost = 0
+        for idx in range(n-1):
+            smoothcost += np.linalg.norm(xi[idx+1,:] - xi[idx,:])**2
+        avoidcost = 0
+        for idx in range(n):
+            avoidcost -= np.linalg.norm(xi[idx,:] - lava) / n
+        return smoothcost + theta * avoidcost
+
+    cons = LinearConstraint(B, [0, 0, 1, 1], [0, 0, 1, 1])
+    res = minimize(trajcost, xi0, args=(theta, lava, n), method='SLSQP', constraints=cons)
+    return res.x.reshape(n,2)
+
+
+""" get human trajectory, where lava is not immediately visible """
+def get_human(theta, lava, noise):
+
+    detect, eta = False, 0.0
+    xi = np.zeros((n,2))
+    xi_star = get_optimal(theta, lava)
+    xi0 = np.zeros((n,2))
+    xi0[:,0] = np.linspace(0, 1, n)
+    xi0[:,1] = np.linspace(0, 1, n)
+    state = xi[0,:]
+
+    for idx in range(1,n):
+        dist2lava = np.linalg.norm(state - lava)
+        if dist2lava < vision_radius:
+            detect = True
+        if detect:
+            eta += 0.1
+            if eta > 1.0:
+                eta = 1.0
+        action = eta * (xi_star[idx,:] - state) + (1 - eta) * (xi0[idx,:] - state)
+        state += action + np.random.normal(0, noise, 2)
+        xi[idx,:] = state
+
+    xi[0,:] = [0,0]
+    xi[-1,:] = [1,1]
+    return xi
+
+
+""" our proposed method of getting 'easier' trajectories """
+def get_counterfactual(xi):
+    stoptime = np.random.randint(0, n)
+    xi1 = copy.deepcopy(xi)
+    xi1[stoptime:,0] = np.linspace(xi[stoptime,0], 1, n - stoptime)
+    xi1[stoptime:,1] = np.linspace(xi[stoptime,1], 1, n - stoptime)
+    return xi1
+
+
+""" collect and record demonstrations """
 def main():
 
-    dataname = "easy"
-    if dataname == "demo":
-        hidden = 1
-        stoptime_min = 200
-        stoptime_max = 201
-    if dataname == "easy":
-        hidden = 1
-        stoptime_min = 0
-        stoptime_max = 50
-    if dataname == "avoid":
-        hidden = 0
-        stoptime_min = 200
-        stoptime_max = 201
-    if dataname == "ignore":
-        hidden = 0
-        stoptime_min = 0
-        stoptime_max = 1
-
-    episodes = 50
-    noise = 0.25
-    step_length = 0.025
-    hidden_radius = 0.3
-    dataset = []
+    episodes = 20
+    theta_star = 1.0
+    THETAS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    demos = []
+    counterfactuals = []
+    noisies = []
+    optimals = {}
+    for theta in THETAS:
+        optimals[str(theta)] = []
 
     for episode in range(episodes):
-        state = np.asarray([0.0, 0.0])
-        goal = np.asarray([1.0, 1.0])
-        lava = np.asarray([random.random()*0.5 + 0.25, random.random()*0.5 + 0.25])
-        dist2goal = np.linalg.norm(state - goal)
-        dist2lava = np.linalg.norm(state - lava)
-        stoptime = np.random.randint(stoptime_min, stoptime_max)
-        xi, t = [], 0
-        while True:
-
-            action2goal = (goal - state) / dist2goal
-            action2lava = (lava - state) / dist2lava
-
-            if t >= stoptime:
-                action = action2goal
-            elif dist2lava > hidden_radius and hidden == True:
-                action = action2goal
-            else:
-                action = action2goal - 0.75 * action2lava
-
-            action += np.random.normal(0, noise, 2)
-            action = step_length * action / np.linalg.norm(action)
-
-            xi.append([t] +[action[0], action[1], state[0], state[1], dist2goal, dist2lava])
-            state += action
-            t += 1
-            dist2goal = np.linalg.norm(state - goal)
-            dist2lava = np.linalg.norm(state - lava)
-
-            if dist2goal < 1e-1:
-                dataset.append(xi)
-                # uncomment to visualize
-                # XI = np.asarray(xi)
-                # plt.plot(XI[:,3], XI[:,4], 'o-')
-                # plt.plot(goal[0], goal[1], 's')
-                # plt.plot(lava[0], lava[1], 'x')
-                # plt.show()
-                break
-
-    pickle.dump( dataset, open( dataname, "wb" ) )
-    print(len(dataset))
+        print(episode * 1.0 / episodes * 100)
+        lava = np.asarray([np.random.random()*0.5 + 0.25, np.random.random()*0.5 + 0.25])
+        xi = get_human(theta_star, lava, 0.01)
+        demos.append((xi, lava))
+        for k in range(10):
+            xi1 = get_counterfactual(xi)
+            counterfactuals.append((xi1, lava))
+        for k in range(10):
+            xi1 = get_human(theta_star, lava, 0.05)
+            noisies.append((xi1, lava))
+        for theta in THETAS:
+            xi_star = get_optimal(theta, lava)
+            optimals[str(theta)].append((xi_star, lava))
+    pickle.dump( demos, open( "demos", "wb" ) )
+    pickle.dump( counterfactuals, open( "counterfactuals", "wb" ) )
+    pickle.dump( noisies, open( "noisies", "wb" ) )
+    pickle.dump( optimals, open( "optimals", "wb" ) )
 
 
 if __name__ == "__main__":

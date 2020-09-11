@@ -4,16 +4,15 @@ import pickle
 
 
 #parameterized reward function
-def R(xi, theta):
-    dist2goal, dist2lava = 0, 0
-    for waypoint in xi:
-        dist2goal += waypoint[5]
-        if waypoint[6] < 0.3:
-            dist2lava += 1
-    dist2goal /= 1.0 * len(xi)
-    dist2lava /= 1.0 * len(xi)
-    R = (1 - theta) * dist2goal + theta * dist2lava
-    return -1.0 * R
+def R(xi, theta, lava):
+    n = len(xi)
+    smoothcost = 0
+    for idx in range(n-1):
+        smoothcost += np.linalg.norm(xi[idx+1,:] - xi[idx,:])**2
+    avoidcost = 0
+    for idx in range(n):
+        avoidcost -= np.linalg.norm(xi[idx,:] - lava) / n
+    return smoothcost + theta * avoidcost
 
 
 #bayesian inference for each reward given demonstrations and choice set
@@ -22,8 +21,23 @@ def get_belief(beta, D, Xi_R):
     p = []
     THETA = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     for theta in THETA:
-        n = np.exp(beta*sum([R(xi, theta) for xi in D]))
-        d = sum([np.exp(beta*R(xi, theta)) for xi in Xi_R])**len(D)
+        n = np.exp(-beta*sum([R(xi, theta, lava) for xi, lava in D]))
+        d = sum([np.exp(-beta*R(xi, theta, lava)) for xi, lava in Xi_R])**len(D)
+        p.append(n/d)
+
+    #normalize and print belief
+    Z = sum(p)
+    b = np.asarray(p) / Z
+    return b
+
+#comparison to optimal feature counts
+def birl_belief(beta, D, O):
+
+    p = []
+    THETA = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    for theta in THETA:
+        n = np.exp(-beta*sum([R(xi, theta, lava) for xi, lava in D]))
+        d = np.exp(-beta*sum([R(xi, theta, lava) for xi, lava in O[str(theta)]]))
         p.append(n/d)
 
     #normalize and print belief
@@ -35,27 +49,30 @@ def get_belief(beta, D, Xi_R):
 def main():
 
     #import trajectories (that could be choices)
-    D = pickle.load( open( "demo", "rb" ) )
-    E = pickle.load( open( "easy", "rb" ) )
-    Davoid = pickle.load( open( "avoid", "rb" ) )
-    Dignore = pickle.load( open( "ignore", "rb" ) )
+    D = pickle.load( open( "demos", "rb" ) )
+    E = pickle.load( open( "counterfactuals", "rb" ) )
+    N = pickle.load( open( "noisies", "rb" ) )
+    O = pickle.load( open( "optimals", "rb" ) )
 
-    #build choice set --- default includes demonstrations and easy simplifications
+    """ our approach, with counterfactuals """
     Xi_R = D + E
-
-    #optionally, you can also include optimal trajectories for each reward function.
-    #if the human had no limitations, we would expect them to show one of these!
-    Xi_R += Davoid
-    Xi_R += Dignore
-
-    #rationality constant. Increasing makes different terms dominate
-    print(len(Xi_R))
     for beta in [0, 0.1, 1, 2]:
         b = get_belief(beta, D, Xi_R)
         plt.bar(range(11), b)
         plt.show()
 
+    """ UT approach, with noise """
+    Xi_R = D + N
+    for beta in [0, 0.1, 1, 2]:
+        b = get_belief(beta, D, Xi_R)
+        plt.bar(range(11), b)
+        plt.show()
 
+    """ classic approach, with matching feature counts """
+    for beta in [0, 0.1, 1, 2]:
+        b = birl_belief(beta, D, O)
+        plt.bar(range(11), b)
+        plt.show()
 
 
 if __name__ == "__main__":
