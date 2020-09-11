@@ -8,12 +8,10 @@ def R(xi, theta):
     dist2goal, dist2lava = 0, 0
     for waypoint in xi:
         dist2goal += waypoint[5]
-        dist2lava_t = waypoint[6]
-        if dist2lava_t < 0.3:
+        if waypoint[6] < 0.3:
             dist2lava += 1
     dist2goal /= 1.0 * len(xi)
     dist2lava /= 1.0 * len(xi)
-    # print(dist2goal, dist2lava)
     R = (1 - theta) * dist2goal + theta * dist2lava
     return -1.0 * R
 
@@ -31,7 +29,7 @@ def get_belief(beta, D, Xi_R):
     #normalize and print belief
     Z = sum(p)
     b = np.asarray(p) / Z
-    print("Belief: ", b)
+    return b
 
 
 def main():
@@ -47,13 +45,15 @@ def main():
 
     #optionally, you can also include optimal trajectories for each reward function.
     #if the human had no limitations, we would expect them to show one of these!
-    # Xi_R += Davoid
-    # Xi_R += Dignore
+    Xi_R += Davoid
+    Xi_R += Dignore
 
     #rationality constant. Increasing makes different terms dominate
     print(len(Xi_R))
     for beta in [0, 0.1, 1, 2]:
-        get_belief(beta, D, Xi_R)
+        b = get_belief(beta, D, Xi_R)
+        plt.bar(range(11), b)
+        plt.show()
 
 
 
