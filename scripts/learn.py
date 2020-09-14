@@ -130,10 +130,10 @@ def main():
 
 
         #import trajectories (that could be choices)
-        D = pickle.load( open( "../data/lander_R1_t_"+ str(t) +".pkl", "rb" ) )
-        E = pickle.load( open( "../data/lander_R1_easy_t_"+ str(t) +".pkl", "rb" ) )
-        O = pickle.load( open( "../data/lander_R2_t_1.pkl", "rb" ) )
-        N = pickle.load( open( "../data/lander_R1_noisy_t_"+ str(t) +".pkl", "rb" ) )
+        D = pickle.load( open( "../data/75/lander_R1_t_"+ str(t) +".pkl", "rb" ) )
+        E = pickle.load( open( "../data/75/lander_R1_easy_t_"+ str(t) +".pkl", "rb" ) )
+        O = pickle.load( open( "../data/75/lander_R2_t_1.pkl", "rb" ) )
+        N = pickle.load( open( "../data/75/lander_R1_noisy_t_"+ str(t) +".pkl", "rb" ) )
 
         print("Action Delay: ", t)
         #rationality constant. Increasing makes different terms dominate
@@ -173,7 +173,7 @@ def main():
             axs[col].set_xlabel('Beta')
             axs[col].set_ylabel('Belief')
             col += 1   
-        plt.savefig('../plots/belief_plots/beliefs_t_' + str(t) + '.png')
+        plt.savefig('../plots/plots_75/beliefs_t_' + str(t) + '.png')
         # plt.show()
 
         b_e_t.append(b_e)
