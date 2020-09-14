@@ -1,10 +1,6 @@
-import gym
-import torch
 import numpy as np
-from train import QNetwork
 import matplotlib.pyplot as plt
 import pickle
-import random
 
 
 #reward function for keeping pole vertical
@@ -68,34 +64,65 @@ def get_belief(beta, D, Xi_R):
     #normalize and print belief
     Z = p1 + p2 + p3 + p4
     b = [p1/Z, p2/Z, p3/Z, p4/Z]
-    print("Belief: ", b)
+    return b
+
+
+#comparison to optimal feature counts
+def birl_belief(beta, D, O):
+
+    #reward for keeping pole vertical
+    n1 = np.exp(beta*sum([Rup(xi) for xi in D]))
+    d1 = np.exp(beta*sum([Rup(xi) for xi in O["up"]]))
+    p1 = n1/d1
+
+    #reward for moving cart right
+    n2 = np.exp(beta*sum([Rright(xi) for xi in D]))
+    d2 = np.exp(beta*sum([Rright(xi) for xi in O["right"]]))
+    p2 = n2/d2
+
+    #reward for moving cart left
+    n3 = np.exp(beta*sum([Rleft(xi) for xi in D]))
+    d3 = np.exp(beta*sum([Rleft(xi) for xi in O["left"]]))
+    p3 = n3/d3
+
+    #reward for keeping pole at an angle
+    n4 = np.exp(beta*sum([Rtilt(xi) for xi in D]))
+    d4 = np.exp(beta*sum([Rtilt(xi) for xi in O["tilt"]]))
+    p4 = n4/d4
+
+    #normalize and print belief
+    Z = p1 + p2 + p3 + p4
+    b = [p1/Z, p2/Z, p3/Z, p4/Z]
+    return b
 
 
 def main():
 
     #import trajectories (that could be choices)
-    D = pickle.load( open( "demo.pkl", "rb" ) )
-    E = pickle.load( open( "easy.pkl", "rb" ) )
-    DstarUP = pickle.load( open( "demo0.pkl", "rb" ) )
-    DstarTILT = pickle.load( open( "demo1.pkl", "rb" ) )
-    DstarLEFT = pickle.load( open( "demo2.pkl", "rb" ) )
-    DstarRIGHT = pickle.load( open( "demo3.pkl", "rb" ) )
+    D = pickle.load( open( "demos", "rb" ) )
+    E = pickle.load( open( "counterfactuals", "rb" ) )
+    N = pickle.load( open( "noisies", "rb" ) )
+    O = pickle.load( open( "optimals", "rb" ) )
 
-    #build choice set --- default includes demonstrations and easy simplifications
+    """ our approach, with counterfactuals """
     Xi_R = D + E
+    for beta in [0, 0.1, 0.5, 1]:
+        b = get_belief(beta, D, Xi_R)
+        plt.bar(range(4), b)
+        plt.show()
 
-    #optionally, you can also include optimal trajectories for each reward function.
-    #if the human had no limitations, we would expect them to show one of these!
-    #Xi_R = DstarUP
-    #Xi_R += DstarRIGHT
-    #Xi_R += DstarLEFT
-    #Xi_R += DstarTILT
+    """ UT approach, with noise """
+    Xi_R = D + N
+    for beta in [0, 0.1, 0.5, 1]:
+        b = get_belief(beta, D, Xi_R)
+        plt.bar(range(4), b)
+        plt.show()
 
-    #rationality constant. Increasing makes different terms dominate
-    for beta in [0, 0.1, 1, 5]:
-        get_belief(beta, D, Xi_R)
-
-
+    """ classic approach, with matching feature counts """
+    for beta in [0, 0.1, 0.5, 1]:
+        b = birl_belief(beta, D, O)
+        plt.bar(range(4), b)
+        plt.show()
 
 
 if __name__ == "__main__":
