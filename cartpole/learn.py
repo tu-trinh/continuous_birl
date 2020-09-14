@@ -82,7 +82,7 @@ def main():
     DstarRIGHT = pickle.load( open( "demo3.pkl", "rb" ) )
 
     #build choice set --- default includes demonstrations and easy simplifications
-    #Xi_R = D + E
+    Xi_R = D + E
 
     #optionally, you can also include optimal trajectories for each reward function.
     #if the human had no limitations, we would expect them to show one of these!

@@ -141,7 +141,7 @@ class LunarLanderC1(gym.Env, EzPickle):
         H = VIEWPORT_H/SCALE
 
         # terrain
-        CHUNKS = 5
+        CHUNKS = 11
         height = self.np_random.uniform(0, H/2, size=(CHUNKS+1,))
         chunk_x = [W/(CHUNKS-1)*i for i in range(CHUNKS)]
         self.helipad_x1 = chunk_x[CHUNKS//2-1]
@@ -333,9 +333,6 @@ class LunarLanderC1(gym.Env, EzPickle):
             - 100*abs(state[4]) + 10*state[6] + 10*state[7]  # And ten points for legs contact, the idea is if you
                                                                  # lose contact again after landing, you get negative reward
 
-        if self.custom_reward:
-            shaping = modified_shaping
-
         if self.prev_shaping is not None:
             reward = shaping - self.prev_shaping
         self.prev_shaping = shaping
@@ -351,18 +348,22 @@ class LunarLanderC1(gym.Env, EzPickle):
         mod_reward -= s_power*0.03
 
         done = False
+        lander_state = True
         if self.game_over or abs(state[0]) >= 1.0:
             done = True
             reward = -100
             mod_reward = -100
+            lander_state = False
+
         if not self.lander.awake:
             done = True
             reward = +100
             mod_reward = +100
+            lander_state = True
 
         self.modified_reward = mod_reward
         return np.array(state, dtype=np.float32), reward,\
-                 done, {'reward':reward, 'mod_reward':mod_reward}
+                 done, {'reward':reward, 'mod_reward':mod_reward, 'awake':lander_state}
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering
