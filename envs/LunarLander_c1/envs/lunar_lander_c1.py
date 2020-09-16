@@ -141,7 +141,7 @@ class LunarLanderC1(gym.Env, EzPickle):
         H = VIEWPORT_H/SCALE
 
         # terrain
-        CHUNKS = 5
+        CHUNKS = 11
         height = self.np_random.uniform(0, H/2, size=(CHUNKS+1,))
         chunk_x = [W/(CHUNKS-1)*i for i in range(CHUNKS)]
         self.helipad_x1 = chunk_x[CHUNKS//2-1]
@@ -322,16 +322,24 @@ class LunarLanderC1(gym.Env, EzPickle):
         reward = 0
         mod_reward = 0
         
+        #R2
         modified_shaping = \
             - 100*np.sqrt(state[1]*state[1]) \
-            - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-            - 100*abs(state[4]) + 10*state[6] + 10*state[7]  # And ten points for legs contact, the idea is if you
+            - 10*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
+            - 10*abs(state[4]) + 10*state[6] + 10*state[7]  # And ten points for legs contact, the idea is if you
                                                                  # lose contact again after landing, you get negative reward
+        #R1 - Original 
         shaping = \
             - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
             - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
             - 100*abs(state[4]) + 10*state[6] + 10*state[7]  # And ten points for legs contact, the idea is if you
                                                                  # lose contact again after landing, you get negative reward
+        #R3
+        # shaping = \
+        #     - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
+        #     - 10*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
+        #     - 10*abs(state[4]) + 0*state[6] + 0*state[7]  # And ten points for legs contact, the idea is if you
+        #                                                          # lose contact again after landing, you get negative reward
 
         if self.prev_shaping is not None:
             reward = shaping - self.prev_shaping
