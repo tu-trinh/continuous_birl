@@ -7,30 +7,33 @@ import LunarLander_c1
 import pickle
 import random
 
-def get_params(r_type):
-    model_name = "dqn.pth"
+def get_params(r_type,max_action_stop):
+    model_name = "dqn_R1.pth"
+    action_stop = max_action_stop
     # R1 with no time stop
-    if r_type == 1:
-        action_stop = 1000
+    if r_type == 1:    
         doc_name = 'R1'
     # R1 with time stops
     elif r_type == 2:
         action_stop = 1
         doc_name = 'R1_easy'
-    # R2 with no time stops
+    # R1 with noise
     elif r_type == 3:
-        action_stop = 1000
         doc_name = 'R1_noisy'
-
-    else:
-        action_stop = 1000
+    # R2 with no time stops (counter factuals for R2)
+    elif r_type == 4:
         doc_name = 'R2'
         model_name = "dqn_R2.pth"
+    else:
+        doc_name = 'R3'
+        model_name = 'dqn_R3.pth'
+
+
     return action_stop, doc_name, model_name
 
 def generate_data(r_type, ep):
-
-    action_stop, doc_name, model_name = get_params(r_type)
+    max_action_stop = 1000
+    action_stop, doc_name, model_name = get_params(r_type, max_action_stop)
 
     # Action delays. Decide how many frames between actions
     t_delay = range(1,11)
@@ -64,9 +67,9 @@ def generate_data(r_type, ep):
             xi = []
             state = env.reset()
             episode_reward = 0
-            modified_episode_reward = 0
-            stop_time = random.randint(action_stop, 500)
-            #print(stop_time)
+            
+            stop_time = random.randint(action_stop, max_action_stop)
+
             for t in range(1000):
 
                 if t < stop_time and t % delay == 0 :
@@ -83,7 +86,6 @@ def generate_data(r_type, ep):
                 env.render()              # can always toggle visualization
                 next_state, _, done, info = env.step(action)
                 reward = info['reward']
-                modified_reward = info['mod_reward']
                 awake = info['awake']
 
                 # Noise for noisy data - UT Austin method
@@ -93,36 +95,25 @@ def generate_data(r_type, ep):
 
                 state = next_state
                 score += reward
-                modified_score += modified_reward
                 episode_reward += reward
-                modified_episode_reward += modified_reward
 
-                if done and t < 1000:
+                if done:
                     # print("Length of trajectory: ",len(xi))
-                    # print("Reward: ", episode_reward)
-                    # print("Lander Status: ",awake)
-                    # for t_left in range(t,1000):
-                    #     xi.append([t_left] + [0] + [awake] + [state])
+                    print("Reward: ", episode_reward)
+                    print("Lander Status: ",awake)
                     dataset.append(xi)
                     if awake:
                         landing += 1
                     break
-                elif done:
-                    print('T = ' + str(t))
-                    break
-
 
         # scores[i] = score/episodes
-        # modified_scores[i] = modified_score/episodes
         # landings[i] = landing
         # print("Mean reward for completed iteration: ", scores[i])
 
         env.close()
         dataname = '../data/lander_' + doc_name + '_t_' + str(delay) + '.pkl'
         # pickle.dump( dataset, open( dataname, "wb" ) )
-        #print(dataset)
-        #print(dataset[0])
-        #print(len(dataset))
+        break
 
 def main():
     '''
@@ -130,15 +121,16 @@ def main():
     i = 1 -> R1 data with no time stop (non counterfactual)
       = 2 -> R1 data with time stop (counterfactuals)
       = 3 -> R1 data with noise
-      = 4 -> R2 data with no time stop 
+      = 4 -> R2 data with no time stop
+      = 5 -> R3 data with no time stop 
     '''
     # for i in range(1,5):
     #     if i == 2 or i == 3:
     #         eps = 100
     #     else:
     #         eps = 25
-    eps = 5
-    i = 2
+    eps = 25
+    i = 5
     generate_data(i, eps)    
 
 if __name__ == "__main__":
