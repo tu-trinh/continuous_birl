@@ -6,6 +6,7 @@ import pickle
 import sys
 
 import gym
+import LunarLander_c1
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -227,13 +228,13 @@ def train(agent,
     return scores
 
 if __name__ == "__main__":
-    env = gym.make("LunarLander-v2")
+    env = gym.make('LunarLanderC1-v0')
     env.seed(0)
     agent = Agent(state_size=8, action_size=4, seed=0)
-    scores = train(agent, savename="../models/dqn_land_anywhere.pth")
+    scores = train(agent, savename="../models/dqn_R3.pth")
 
     # load the weights from file
-    agent.qnetwork_local.load_state_dict(torch.load('../models/dqn_land_anywhere.pth'))
+    agent.qnetwork_local.load_state_dict(torch.load('../models/dqn_R3.pth'))
 
     for i in range(3):
         state = env.reset()

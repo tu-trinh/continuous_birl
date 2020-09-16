@@ -141,7 +141,7 @@ class LunarLanderC1(gym.Env, EzPickle):
         H = VIEWPORT_H/SCALE
 
         # terrain
-        CHUNKS = 11
+        CHUNKS = 5
         height = self.np_random.uniform(0, H/2, size=(CHUNKS+1,))
         chunk_x = [W/(CHUNKS-1)*i for i in range(CHUNKS)]
         self.helipad_x1 = chunk_x[CHUNKS//2-1]
@@ -351,13 +351,13 @@ class LunarLanderC1(gym.Env, EzPickle):
         lander_state = True
         if self.game_over or abs(state[0]) >= 1.0:
             done = True
-            reward = -100
+            reward = -1
             mod_reward = -100
             lander_state = False
 
         if not self.lander.awake:
             done = True
-            reward = +100
+            reward = +1
             mod_reward = +100
             lander_state = True
 
