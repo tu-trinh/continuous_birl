@@ -22,12 +22,12 @@ def Reward(xi, R_type):
         action = waypoint[1]
         if R_type == 1:
             shaping = \
-                - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
+                - 1000*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
                 - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
                 - 100*abs(state[4]) + 10*state[6] + 10*state[7]
         else:
             shaping = \
-                - 100*np.sqrt(state[1]*state[1]) \
+                - 1000*np.sqrt(state[1]*state[1]) \
                 - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
                 - 100*abs(state[4]) + 10*state[6] + 10*state[7]
 
@@ -86,11 +86,11 @@ def get_belief(beta, D, Xi_R):
     b = [p1/Z, p2/Z]
     return b
 
-def birl_belief(beta, D, Xi_R):
+def birl_belief(beta, D, Xi_R1, Xi_R2):
     rewards_D = np.asarray([Reward(xi,1) for xi in D], dtype = np.float32)    
-    rewards_XiR = np.asarray([Reward(xi,1) for xi in Xi_R], dtype = np.float32)    
+    rewards_XiR = np.asarray([Reward(xi,1) for xi in Xi_R1], dtype = np.float32)    
     rewards_D_2 = np.asarray([Reward(xi,2) for xi in D], dtype = np.float32)    
-    rewards_XiR_2 = np.asarray([Reward(xi,2) for xi in Xi_R], dtype = np.float32)
+    rewards_XiR_2 = np.asarray([Reward(xi,2) for xi in Xi_R2], dtype = np.float32)
 
     norm = np.max(np.asarray([np.max(np.abs(rewards_D)),np.max(np.abs(rewards_XiR)),\
          np.max(np.abs(rewards_D_2)), np.max(np.abs(rewards_XiR_2))]))
@@ -130,10 +130,11 @@ def main():
 
 
         #import trajectories (that could be choices)
-        D = pickle.load( open( "../data/75/lander_R1_t_"+ str(t) +".pkl", "rb" ) )
-        E = pickle.load( open( "../data/75/lander_R1_easy_t_"+ str(t) +".pkl", "rb" ) )
-        O = pickle.load( open( "../data/75/lander_R2_t_1.pkl", "rb" ) )
-        N = pickle.load( open( "../data/75/lander_R1_noisy_t_"+ str(t) +".pkl", "rb" ) )
+        D = pickle.load( open( "../data/lander_R1_t_"+ str(t) +".pkl", "rb" ) )
+        E = pickle.load( open( "../data/lander_R1_easy_t_"+ str(t) +".pkl", "rb" ) )
+        O_R2 = pickle.load( open( "../data/lander_R2_t_1.pkl", "rb" ) )
+        O_R1 = pickle.load( open("../data/lander_R1_t_1.pkl", "rb") )
+        N = pickle.load( open( "../data/lander_R1_noisy_t_"+ str(t) +".pkl", "rb" ) )
 
         print("Action Delay: ", t)
         #rationality constant. Increasing makes different terms dominate
@@ -158,8 +159,7 @@ def main():
             # col += 1
 
             # Classic appraoch
-            Xi_R = O
-            b = birl_belief(beta, D, Xi_R)
+            b = birl_belief(beta, D, O_R1, O_R2)
             b_o.append(b[0])
             # axs[col].bar(Rewards, b)
         titles = ['Our Approach', 'UT Approach', 'Classic Approach']
@@ -173,7 +173,7 @@ def main():
             axs[col].set_xlabel('Beta')
             axs[col].set_ylabel('Belief')
             col += 1   
-        plt.savefig('../plots/plots_75/beliefs_t_' + str(t) + '.png')
+        plt.savefig('../plots/modified_reward/beliefs_t_' + str(t) + '.png')
         # plt.show()
 
         b_e_t.append(b_e)

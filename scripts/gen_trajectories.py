@@ -28,12 +28,12 @@ def main():
 
         # load our trained q-network
         qnetwork = QNetwork(state_size=8, action_size=4, seed=1)
-        qnetwork.load_state_dict(torch.load("../models/dqn.pth"))
+        qnetwork.load_state_dict(torch.load("../models/dqn_R3.pth"))
         qnetwork.eval()
         softmax = torch.nn.Softmax(dim=1)
 
         # we'll rollout over N episodes
-        episodes = 1
+        episodes = 100
 
         ''' Calculate Rewards over multiple delays
             The action delay is calculated as timestep % delay_factor
@@ -76,7 +76,7 @@ def main():
                         #print(action)
 
                     # apply that action and take a step
-                    #env.render()              # can always toggle visualization
+                    env.render()              # can always toggle visualization
                     xi.append([t] + [action] + list(state))
                     next_state, _, done, info = env.step(action)
                     reward = info['reward']
@@ -161,7 +161,7 @@ def main():
     # f1.savefig('../plots/trajectories.png')
     # f2.savefig('../plots/mean_reward.png')
     # #plt.show()
-    pickle.dump( dataset, open( dataname, "wb" ) )
+    # pickle.dump( dataset, open( dataname, "wb" ) )
     print(dataset)
     print(len(dataset))
 
