@@ -179,10 +179,9 @@ def main():
     width = 0.35
 
     for delay in t_delay:
-        # i = 1
         dist, sigma = generate_data(r_type, eps, delay, max_action_stops)   
-        rects1 = axs[p_row,p_col].bar(x - width/2, dist, 0.35, label = 'Mean')
-        rects2 = axs[p_row,p_col].bar(x + width/2, sigma, 0.35, label = 'Variance')
+        axs[p_row,p_col].bar(x - width/2, dist, 0.35, label = 'Mean')
+        axs[p_row,p_col].bar(x + width/2, sigma, 0.35, label = 'Variance')
         # print(dist)
         axs[p_row,p_col].title.set_text('Action Delay: ' + str(delay))
         axs[p_row,p_col].set_xticks(x)

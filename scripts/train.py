@@ -188,7 +188,7 @@ class ReplayBuffer:
 
 def train(agent,
     n_episodes=4000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995,
-    savename="dqn.pth"):
+    savename="dqn.pth", reward_type=1):
     """Deep Q-Learning.
 
     Params
@@ -204,11 +204,10 @@ def train(agent,
     scores_window = deque(maxlen=100)  # last 100 scores
     eps = eps_start                    # initialize epsilon
     for i_episode in range(1, n_episodes+1):
-        state = env.reset()
+        state = env.reset(reward_type = reward_type)
         score = 0
         for t in range(max_t):
-            if(t%6 == 0):
-                action = agent.act(state, eps)
+            action = agent.act(state, eps)
             # env.render()                # toggle this line to visualize training
             next_state, reward, done, _ = env.step(action)
             agent.step(state, action, reward, next_state, done)
@@ -219,7 +218,8 @@ def train(agent,
         scores_window.append(score)       # save most recent score
         scores.append(score)              # save most recent score
         eps = max(eps_end, eps_decay*eps) # decrease epsilon
-        print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
+        print('\rEpisode {}\tAverage Score: {:.2f}\tReward Type: {} '.\
+            format(i_episode, np.mean(scores_window), reward_type), end="")
         if i_episode % 100 == 0:
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
             torch.save(agent.qnetwork_local.state_dict(), savename)
@@ -230,19 +230,24 @@ def train(agent,
 if __name__ == "__main__":
     env = gym.make('LunarLanderC1-v0')
     env.seed(0)
-    agent = Agent(state_size=8, action_size=4, seed=0)
-    scores = train(agent, savename="../models/dqn_R3.pth")
+    # reward_types = [1, 2 ,3]
+    reward_types = [3, 2]
+    for reward_type in reward_types:
+        file_name = "../models/dqn_R"+ str(reward_type) +".pth"
+        agent = Agent(state_size=8, action_size=4, seed=0)
+        scores = train(agent, savename=file_name, reward_type=reward_type)
 
-    # load the weights from file
-    agent.qnetwork_local.load_state_dict(torch.load('../models/dqn_R3.pth'))
+        # load the weights from file
+        agent.qnetwork_local.load_state_dict(torch.load(file_name))
+        break
 
-    for i in range(3):
-        state = env.reset()
-        for j in range(200):
-            action = agent.act(state)
-            env.render()
-            state, reward, done, _ = env.step(action)
-            if done:
-                break
+        for i in range(3):
+            state = env.reset(reward_type = reward_type)
+            for j in range(200):
+                action = agent.act(state)
+                env.render()
+                state, reward, done, _ = env.step(action)
+                if done:
+                    break
 
-    env.close()
+        env.close()

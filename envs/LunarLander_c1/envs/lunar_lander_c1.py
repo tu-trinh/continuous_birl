@@ -95,9 +95,9 @@ class LunarLanderC1(gym.Env, EzPickle):
         self.moon = None
         self.lander = None
         self.particles = []
-        self.custom_reward = False
-        self.prev_reward = None
-        self.modified_reward = 0
+
+        # Variable to select from rewards R1, R2, R3
+        self.reward_type = 1
         
 
         # useful range is -1 .. +1, but spikes can be higher
@@ -129,19 +129,21 @@ class LunarLanderC1(gym.Env, EzPickle):
         self.world.DestroyBody(self.legs[0])
         self.world.DestroyBody(self.legs[1])
 
-    def reset(self):
+    def reset(self, reward_type = 1):
         self._destroy()
         self.world.contactListener_keepref = ContactDetector(self)
         self.world.contactListener = self.world.contactListener_keepref
         self.game_over = False
+        self.prev_shapings = [None, None, None]
         self.prev_shaping = None
-        self.modified_prev_shaping = None
+        self.reward_type = reward_type
+        self.initial_x = None
 
         W = VIEWPORT_W/SCALE
         H = VIEWPORT_H/SCALE
 
         # terrain
-        CHUNKS = 11
+        CHUNKS = 5
         height = self.np_random.uniform(0, H/2, size=(CHUNKS+1,))
         chunk_x = [W/(CHUNKS-1)*i for i in range(CHUNKS)]
         self.helipad_x1 = chunk_x[CHUNKS//2-1]
@@ -170,6 +172,7 @@ class LunarLanderC1(gym.Env, EzPickle):
 
         initial_y = VIEWPORT_H/SCALE
         initial_x = np.random.uniform(VIEWPORT_W/SCALE/2 - 5.0, VIEWPORT_W/SCALE/2 + 5.0)
+        self.initial_x = initial_x
         self.lander = self.world.CreateDynamicBody(
             position=(initial_x, initial_y),
             angle=0.0,
@@ -320,58 +323,87 @@ class LunarLanderC1(gym.Env, EzPickle):
         assert len(state) == 8
 
         reward = 0
-        mod_reward = 0
-        
-        #R2
-        modified_shaping = \
-            - 100*np.sqrt(state[1]*state[1]) \
-            - 10*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-            - 10*abs(state[4]) + 10*state[6] + 10*state[7]  # And ten points for legs contact, the idea is if you
-                                                                 # lose contact again after landing, you get negative reward
+        # shaping = \
+        #     - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
+        #     - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
+        #     - 100*abs(state[4]) + 10*state[6] + 10*state[7]  # And ten points for legs contact, the idea is if you
+        #                                                      # lose contact again after landing, you get negative reward
+        # if self.prev_shaping is not None:
+        #     reward = shaping - self.prev_shaping
+        # self.prev_shaping = shaping
+
+        # reward -= m_power*0.30  # less fuel spent is better, about -30 for heuristic landing
+        # reward -= s_power*0.03
+
+        # done = False
+        # if self.game_over or abs(state[0]) >= 1.0:
+        #     done = True
+        #     reward = -100
+        # if not self.lander.awake:
+        #     done = True
+        #     reward = +100
+
+        # Get rewards for R1, R2 and R3
+        rewards, done, lander_state = self.shape_reward(state, m_power, s_power)
+        # Return reward for the selected reward type
+        reward = rewards[self.reward_type - 1]
+
+        return np.array(state, dtype=np.float32), reward,\
+                 done, {'reward':reward, 'mod_reward':rewards,\
+                  'awake':lander_state, 'reward_type':self.reward_type}
+
+    def shape_reward(self, state, m_power, s_power):
+        rewards = [0, 0, 0]
+        shapings = [0, 0, 0]
+
         #R1 - Original 
-        shaping = \
+        shapings[0] = \
             - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
             - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
             - 100*abs(state[4]) + 10*state[6] + 10*state[7]  # And ten points for legs contact, the idea is if you
-                                                                 # lose contact again after landing, you get negative reward
+                                                             # lose contact again after landing, you get negative reward
+        #R2
+        shapings[1] = \
+            - 100*np.sqrt((state[0]-self.initial_x)**2 + state[1]*state[1]) \
+            - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
+            - 100*abs(state[4]) + 10*state[6] + 10*state[7]  # And ten points for legs contact, the idea is if you
+                                                            # lose contact again after landing, you get negative reward
+
         #R3
-        # shaping = \
-        #     - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
-        #     - 10*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-        #     - 10*abs(state[4]) + 0*state[6] + 0*state[7]  # And ten points for legs contact, the idea is if you
-        #                                                          # lose contact again after landing, you get negative reward
+        shapings[2] = \
+            - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
+            - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
+            - 0*abs(state[4]) + 0*state[6] + 0*state[7]  # And ten points for legs contact, the idea is if you
+                                                         # lose contact again after landing, you get negative reward
 
-        if self.prev_shaping is not None:
-            reward = shaping - self.prev_shaping
-        self.prev_shaping = shaping
+        for i in range(len(rewards)):
 
-        if self.modified_prev_shaping is not None:
-            mod_reward = modified_shaping - self.modified_prev_shaping
-        self.modified_prev_shaping = modified_shaping
+            if self.prev_shapings[i] is not None:
+                rewards[i] = shapings[i] - self.prev_shapings[i]
+            self.prev_shapings[i] = shapings[i]
 
-        reward -= m_power*0.30  # less fuel spent is better, about -30 for heuristic landing
-        reward -= s_power*0.03
-
-        mod_reward -= m_power*0.30
-        mod_reward -= s_power*0.03
+            rewards[i] -= m_power*0.30  # less fuel spent is better, about -30 for heuristic landing
+            rewards[i] -= s_power*0.03
 
         done = False
         lander_state = True
+        
         if self.game_over or abs(state[0]) >= 1.0:
             done = True
-            reward = -1
-            mod_reward = -100
+            rewards[0] = -100
+            rewards[1] = -100
+            rewards[2] = +100
             lander_state = False
 
         if not self.lander.awake:
             done = True
-            reward = +1
-            mod_reward = +100
+            rewards[0] = +100
+            rewards[1] = +100
+            rewards[2] = -100
             lander_state = True
 
-        self.modified_reward = mod_reward
-        return np.array(state, dtype=np.float32), reward,\
-                 done, {'reward':reward, 'mod_reward':mod_reward, 'awake':lander_state}
+        return rewards, done, lander_state
+
 
     def render(self, mode='human'):
         from gym.envs.classic_control import rendering
@@ -416,11 +448,6 @@ class LunarLanderC1(gym.Env, EzPickle):
             self.viewer.close()
             self.viewer = None
 
-    def get_modified_reward(self):
-        return self.modified_reward
-
-    def set_custom_reward(self,status):
-        self.custom_reward = status
 
 
 class LunarLanderContinuous(LunarLanderC1):
