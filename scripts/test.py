@@ -130,7 +130,7 @@ def main():
     #     else:
     #         eps = 25
     eps = 25
-    i = 5
+    i = 4
     generate_data(i, eps)    
 
 if __name__ == "__main__":
