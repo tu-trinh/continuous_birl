@@ -231,7 +231,7 @@ if __name__ == "__main__":
     env = gym.make('LunarLanderC1-v0')
     env.seed(0)
     # reward_types = [1, 2 ,3]
-    reward_types = [3, 2]
+    reward_types = [2, 3]
     for reward_type in reward_types:
         file_name = "../models/dqn_R"+ str(reward_type) +".pth"
         agent = Agent(state_size=8, action_size=4, seed=0)
