@@ -230,8 +230,10 @@ def train(agent,
 if __name__ == "__main__":
     env = gym.make('LunarLanderC1-v0')
     env.seed(0)
-    # reward_types = [1, 2 ,3]
-    reward_types = [2, 3]
+    # Train networks using R1, R2 and R3
+    reward_types = [1, 2 ,3]
+    # Toggle to train all 3 Q networks
+    train_all = False
     for reward_type in reward_types:
         file_name = "../models/dqn_R"+ str(reward_type) +".pth"
         agent = Agent(state_size=8, action_size=4, seed=0)
@@ -239,7 +241,7 @@ if __name__ == "__main__":
 
         # load the weights from file
         agent.qnetwork_local.load_state_dict(torch.load(file_name))
-        break
+        
 
         for i in range(3):
             state = env.reset(reward_type = reward_type)
@@ -251,3 +253,5 @@ if __name__ == "__main__":
                     break
 
         env.close()
+        if not train_all:
+            break

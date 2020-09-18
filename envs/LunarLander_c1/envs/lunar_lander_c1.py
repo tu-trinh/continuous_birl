@@ -35,6 +35,7 @@ from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revolute
 import gym
 from gym import spaces
 from gym.utils import seeding, EzPickle
+import random
 
 FPS = 50
 SCALE = 30.0   # affects how fast-paced the game is, forces should be adjusted as well
@@ -143,17 +144,26 @@ class LunarLanderC1(gym.Env, EzPickle):
         H = VIEWPORT_H/SCALE
 
         # terrain
-        CHUNKS = 5
-        height = self.np_random.uniform(0, H/2, size=(CHUNKS+1,))
+        CHUNKS = 15
+        
         chunk_x = [W/(CHUNKS-1)*i for i in range(CHUNKS)]
         self.helipad_x1 = chunk_x[CHUNKS//2-1]
         self.helipad_x2 = chunk_x[CHUNKS//2+1]
         self.helipad_y = H/4
+
+        # Use to create flat ground
+        # height = [H/4] * (CHUNKS+1)
+        # Use to create mountains around helipad
+        height = self.np_random.uniform(0, H/2, size=(CHUNKS+1,))
+        height[CHUNKS//2-5] = self.helipad_y
+        height[CHUNKS//2-4] = self.helipad_y
         height[CHUNKS//2-2] = self.helipad_y
         height[CHUNKS//2-1] = self.helipad_y
         height[CHUNKS//2+0] = self.helipad_y
         height[CHUNKS//2+1] = self.helipad_y
         height[CHUNKS//2+2] = self.helipad_y
+        height[CHUNKS//2+4] = self.helipad_y
+        height[CHUNKS//2+5] = self.helipad_y
         smooth_y = [0.33*(height[i-1] + height[i+0] + height[i+1]) for i in range(CHUNKS)]
 
         self.moon = self.world.CreateStaticBody(shapes=edgeShape(vertices=[(0, 0), (W, 0)]))
@@ -171,7 +181,9 @@ class LunarLanderC1(gym.Env, EzPickle):
         self.moon.color2 = (0.0, 0.0, 0.0)
 
         initial_y = VIEWPORT_H/SCALE
-        initial_x = np.random.uniform(VIEWPORT_W/SCALE/2 - 5.0, VIEWPORT_W/SCALE/2 + 5.0)
+        x1 = np.random.uniform(CHUNKS//2-1,CHUNKS//2+1)
+        x2 = np.random.uniform(CHUNKS//2+5,CHUNKS//2+7)
+        initial_x = random.choice([x1, x2])
         self.initial_x = initial_x
         self.lander = self.world.CreateDynamicBody(
             position=(initial_x, initial_y),
@@ -328,7 +340,7 @@ class LunarLanderC1(gym.Env, EzPickle):
         reward = rewards[self.reward_type - 1]
 
         return np.array(state, dtype=np.float32), reward,\
-                 done, {'reward':reward, 'mod_reward':rewards,\
+                 done, {'reward':reward, 'rewards':rewards,\
                   'awake':lander_state, 'reward_type':self.reward_type}
 
     def shape_reward(self, state, m_power, s_power):
@@ -354,7 +366,7 @@ class LunarLanderC1(gym.Env, EzPickle):
             - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
             - 0*abs(state[4]) + 0*state[6] + 0*state[7]  # And ten points for legs contact, the idea is if you
                                                          # lose contact again after landing, you get negative reward
-        # print(shapings)
+
         for i in range(len(rewards)):
 
             if self.prev_shapings[i] is not None:
