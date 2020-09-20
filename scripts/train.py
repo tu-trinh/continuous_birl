@@ -241,7 +241,7 @@ if __name__ == "__main__":
 
         # load the weights from file
         agent.qnetwork_local.load_state_dict(torch.load(file_name))
-        
+
 
         for i in range(3):
             state = env.reset(reward_type = reward_type)
