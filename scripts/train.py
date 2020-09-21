@@ -231,7 +231,7 @@ if __name__ == "__main__":
     env = gym.make('LunarLanderC1-v0')
     env.seed(0)
     # Train networks using R1, R2 and R3
-    reward_types = [1, 2 ,3]
+    reward_types = [3]
     # Toggle to train all 3 Q networks
     train_all = False
     for reward_type in reward_types:

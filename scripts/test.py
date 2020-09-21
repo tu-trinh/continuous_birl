@@ -11,7 +11,7 @@ def get_params(r_type, d_type, max_action_stop):
     model_name = "dqn_R" + str(r_type) + ".pth"
     action_stop = max_action_stop
     # No time stop
-    if d_type == 1:    
+    if d_type == 1:
         doc_name = 'R' + str(r_type)
     # With time stops
     elif d_type == 2:
@@ -30,7 +30,7 @@ def gen_traj(ep, delay=1, d_type=1, r_type=1, max_action_stop = 1000, save_data=
     # load our trained q-network
     path = "../models/" + model_name
     qnetwork = QNetwork(state_size=8, action_size=4, seed=1)
-    qnetwork.load_state_dict(torch.load(path))
+    qnetwork.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
     qnetwork.eval()
     softmax = torch.nn.Softmax(dim=1)
 
@@ -42,14 +42,14 @@ def gen_traj(ep, delay=1, d_type=1, r_type=1, max_action_stop = 1000, save_data=
 
     # we'll rollout over N episodes
     episodes = ep
-    
+
     score = 0
-    for episode in range(episodes):          
+    for episode in range(episodes):
         # reset to start
         state = env.reset(reward_type = r_type)
         landing = 0
         xi = []
-        episode_reward = 0     
+        episode_reward = 0
         stop_time = random.randint(action_stop, max_action_stop)
 
         for t in range(1000):
@@ -63,7 +63,7 @@ def gen_traj(ep, delay=1, d_type=1, r_type=1, max_action_stop = 1000, save_data=
             elif t > stop_time:
                 action = 0
             # Noise for noisy data - UT Austin method
-            if r_type == 3 and np.random.random() < 0.05:
+            if d_type == 3 and np.random.random() < 0.4 and t < 200:
                 action = np.random.randint(0,4)
 
             # apply that action and take a step
@@ -107,10 +107,9 @@ def main():
         r1_counterfactuals = gen_traj(episodes_counter, delay=delay,\
                              d_type=2, max_action_stop=max_action_stop, save_data=save_data)
         r1_noisies = gen_traj(episodes_noisy, delay=delay, d_type=3, save_data=save_data)
-    
+
     r2_optimals = gen_traj(episodes, r_type=2, save_data=save_data)
     r3_optimals = gen_traj(episodes, r_type=3, save_data=save_data)
 
 if __name__ == "__main__":
     main()
-

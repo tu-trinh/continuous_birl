@@ -99,7 +99,7 @@ class LunarLanderC1(gym.Env, EzPickle):
 
         # Variable to select from rewards R1, R2, R3
         self.reward_type = 1
-        
+
 
         # useful range is -1 .. +1, but spikes can be higher
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=(8,), dtype=np.float32)
@@ -145,7 +145,7 @@ class LunarLanderC1(gym.Env, EzPickle):
 
         # terrain
         CHUNKS = 15
-        
+
         chunk_x = [W/(CHUNKS-1)*i for i in range(CHUNKS)]
         self.helipad_x1 = chunk_x[CHUNKS//2-1]
         self.helipad_x2 = chunk_x[CHUNKS//2+1]
@@ -154,7 +154,7 @@ class LunarLanderC1(gym.Env, EzPickle):
         # Use to create flat ground
         # height = [H/4] * (CHUNKS+1)
         # Use to create mountains around helipad
-        height = self.np_random.uniform(0, H/2, size=(CHUNKS+1,))
+        height = self.np_random.uniform(0, 0, size=(CHUNKS+1,))
         height[CHUNKS//2-5] = self.helipad_y
         height[CHUNKS//2-4] = self.helipad_y
         height[CHUNKS//2-2] = self.helipad_y
@@ -164,7 +164,7 @@ class LunarLanderC1(gym.Env, EzPickle):
         height[CHUNKS//2+2] = self.helipad_y
         height[CHUNKS//2+4] = self.helipad_y
         height[CHUNKS//2+5] = self.helipad_y
-        smooth_y = [0.33*(height[i-1] + height[i+0] + height[i+1]) for i in range(CHUNKS)]
+        smooth_y = [3.3 for i in range(CHUNKS)]
 
         self.moon = self.world.CreateStaticBody(shapes=edgeShape(vertices=[(0, 0), (W, 0)]))
         self.sky_polys = []
@@ -184,7 +184,6 @@ class LunarLanderC1(gym.Env, EzPickle):
         x1 = np.random.uniform(CHUNKS//2-1,CHUNKS//2+1)
         x2 = np.random.uniform(CHUNKS//2+5,CHUNKS//2+7)
         initial_x = random.choice([x1, x2])
-        self.initial_x = initial_x
         self.lander = self.world.CreateDynamicBody(
             position=(initial_x, initial_y),
             angle=0.0,
@@ -238,6 +237,7 @@ class LunarLanderC1(gym.Env, EzPickle):
             self.legs.append(leg)
 
         self.drawlist = [self.lander] + self.legs
+        self.reset_state = True
 
         return self.step(np.array([0, 0]) if self.continuous else 0)[0]
 
@@ -334,6 +334,10 @@ class LunarLanderC1(gym.Env, EzPickle):
             ]
         assert len(state) == 8
 
+        if self.reset_state:
+            self.reset_state = False
+            self.initial_x = state[0]
+
         # Get rewards for R1, R2 and R3
         rewards, done, lander_state = self.shape_reward(state, m_power, s_power)
         # Return reward for the selected reward type
@@ -347,25 +351,23 @@ class LunarLanderC1(gym.Env, EzPickle):
         rewards = [0, 0, 0]
         shapings = [0, 0, 0]
 
-        #R1 - Original 
+        #R1 - Original
         shapings[0] = \
             - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
             - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-            - 100*abs(state[4]) + 10*state[6] + 10*state[7]  # And ten points for legs contact, the idea is if you
-                                                             # lose contact again after landing, you get negative reward
-        #R2
+            - 100*abs(state[4]) + 10*state[6] + 10*state[7]
+
+        #R2 - No bonus for minimizing distance along x axis
         shapings[1] = \
             - 100*np.sqrt(state[1]*state[1]) \
             - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-            - 100*abs(state[4]) + 10*state[6] + 10*state[7]\
-            - 10*abs(abs(state[0]) - abs(self.initial_x))   # lose contact again after landing, you get negative reward
+            - 100*abs(state[4]) + 10*state[6] + 10*state[7]
 
-        #R3
+        #R3 - No concern about landing upright
         shapings[2] = \
             - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
             - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-            - 0*abs(state[4]) + 0*state[6] + 0*state[7]  # And ten points for legs contact, the idea is if you
-                                                         # lose contact again after landing, you get negative reward
+            - 0.0*abs(state[4]) + 0.0*state[6] + 0.0*state[7]
 
         for i in range(len(rewards)):
 
@@ -378,19 +380,27 @@ class LunarLanderC1(gym.Env, EzPickle):
 
         done = False
         lander_state = True
-        
+
         if self.game_over or abs(state[0]) >= 1.0:
             done = True
             rewards[0] = -100
             rewards[1] = -100
-            rewards[2] = +100
+            rewards[2] = +100.0
+            # if np.linalg.norm(state[0]) < 0.1:
+            #     rewards[2] = +100
             lander_state = False
 
         if not self.lander.awake:
             done = True
-            rewards[0] = +100
-            rewards[1] = +100
-            rewards[2] = -100
+            rewards[0] = 0.0
+            rewards[1] = 0.0
+            rewards[2] = -100.0
+            if np.linalg.norm(state[0]) < 0.1:
+                rewards[0] = +100
+            if np.linalg.norm(state[0] - self.initial_x) < 0.1:
+                rewards[1] = +100
+            # if np.linalg.norm(state[0]) < 0.1:
+            #     rewards[2] = +100
             lander_state = True
 
         return rewards, done, lander_state

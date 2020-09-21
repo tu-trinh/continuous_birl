@@ -8,7 +8,7 @@ import pickle
 import random
 
 
-model_name = "dqn_R2.pth"
+model_name = "dqn_R3.pth"
 path = "../models/" + model_name
 qnetwork = QNetwork(state_size=8, action_size=4, seed=1)
 qnetwork.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
@@ -25,7 +25,7 @@ env = gym.make('LunarLanderC1-v0')
 episodes = 10
 
 # reward type
-r_type = 2
+r_type = 3
 action_stop = 999
 max_action_stop = 1000
 delay = 1
