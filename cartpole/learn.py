@@ -106,7 +106,6 @@ def main():
 
     """ our approach, with counterfactuals """
     Xi_R = D + E
-    print(len(Xi_R))
     for beta in [0.01, 0.1, 0.5]:
         b = get_belief(beta, D, Xi_R)
         plt.bar(range(4), b)

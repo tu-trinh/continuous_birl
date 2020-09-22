@@ -67,7 +67,7 @@ def gen_traj(ep, delay=1, d_type=1, r_type=1, max_action_stop = 1000, save_data=
                 action = np.random.randint(0,4)
 
             # apply that action and take a step
-            # env.render()              # can always toggle visualization
+            env.render()              # can always toggle visualization
             next_state, _, done, info = env.step(action)
             reward = info['reward']
             awake = info['awake']

@@ -26,6 +26,19 @@ Created by Oleg Klimov. Licensed on the same terms as the rest of OpenAI Gym.
 """
 
 
+"""
+s (list): The state. Attributes:
+          s[0] is the horizontal coordinate
+          s[1] is the vertical coordinate
+          s[2] is the horizontal speed
+          s[3] is the vertical speed
+          s[4] is the angle
+          s[5] is the angular speed
+          s[6] 1 if first leg has contact, else 0
+          s[7] 1 if second leg has contact, else 0
+"""
+
+
 import sys, math
 import numpy as np
 
@@ -79,7 +92,7 @@ class ContactDetector(contactListener):
                 self.env.legs[i].ground_contact = False
 
 
-class LunarLanderC1(gym.Env, EzPickle):
+class LunarLanderTheta(gym.Env, EzPickle):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : FPS
@@ -97,10 +110,6 @@ class LunarLanderC1(gym.Env, EzPickle):
         self.lander = None
         self.particles = []
 
-        # Variable to select from rewards R1, R2, R3
-        self.reward_type = 1
-
-
         # useful range is -1 .. +1, but spikes can be higher
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=(8,), dtype=np.float32)
 
@@ -112,8 +121,6 @@ class LunarLanderC1(gym.Env, EzPickle):
         else:
             # Nop, fire left engine, main engine, right engine
             self.action_space = spaces.Discrete(4)
-
-        self.reset()
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -130,14 +137,14 @@ class LunarLanderC1(gym.Env, EzPickle):
         self.world.DestroyBody(self.legs[0])
         self.world.DestroyBody(self.legs[1])
 
-    def reset(self, reward_type = 1):
+    def reset(self, theta):
         self._destroy()
         self.world.contactListener_keepref = ContactDetector(self)
         self.world.contactListener = self.world.contactListener_keepref
         self.game_over = False
         self.prev_shapings = [None, None, None]
         self.prev_shaping = None
-        self.reward_type = reward_type
+        self.theta = theta
         self.initial_x = None
 
         W = VIEWPORT_W/SCALE
@@ -341,11 +348,16 @@ class LunarLanderC1(gym.Env, EzPickle):
         # Get rewards for R1, R2 and R3
         rewards, done, lander_state = self.shape_reward(state, m_power, s_power)
         # Return reward for the selected reward type
-        reward = rewards[self.reward_type - 1]
+        if self.theta == "center":
+            reward = rewards[0]
+        elif self.theta == "anywhere":
+            reward = rewards[1]
+        elif self.theta == "crash":
+            reward = rewards[2]
 
         return np.array(state, dtype=np.float32), reward,\
                  done, {'reward':reward, 'rewards':rewards,\
-                  'awake':lander_state, 'reward_type':self.reward_type}
+                  'awake':lander_state, 'theta':self.theta}
 
     def shape_reward(self, state, m_power, s_power):
         rewards = [0, 0, 0]
@@ -448,76 +460,3 @@ class LunarLanderC1(gym.Env, EzPickle):
         if self.viewer is not None:
             self.viewer.close()
             self.viewer = None
-
-
-
-class LunarLanderContinuous(LunarLanderC1):
-    continuous = True
-
-def heuristic(env, s):
-    """
-    The heuristic for
-    1. Testing
-    2. Demonstration rollout.
-
-    Args:
-        env: The environment
-        s (list): The state. Attributes:
-                  s[0] is the horizontal coordinate
-                  s[1] is the vertical coordinate
-                  s[2] is the horizontal speed
-                  s[3] is the vertical speed
-                  s[4] is the angle
-                  s[5] is the angular speed
-                  s[6] 1 if first leg has contact, else 0
-                  s[7] 1 if second leg has contact, else 0
-    returns:
-         a: The heuristic to be fed into the step function defined above to determine the next step and reward.
-    """
-
-    angle_targ = s[0]*0.5 + s[2]*1.0         # angle should point towards center
-    if angle_targ > 0.4: angle_targ = 0.4    # more than 0.4 radians (22 degrees) is bad
-    if angle_targ < -0.4: angle_targ = -0.4
-    hover_targ = 0.55*np.abs(s[0])           # target y should be proportional to horizontal offset
-
-    angle_todo = (angle_targ - s[4]) * 0.5 - (s[5])*1.0
-    hover_todo = (hover_targ - s[1])*0.5 - (s[3])*0.5
-
-    if s[6] or s[7]:  # legs have contact
-        angle_todo = 0
-        hover_todo = -(s[3])*0.5  # override to reduce fall speed, that's all we need after contact
-
-    if env.continuous:
-        a = np.array([hover_todo*20 - 1, -angle_todo*20])
-        a = np.clip(a, -1, +1)
-    else:
-        a = 0
-        if hover_todo > np.abs(angle_todo) and hover_todo > 0.05: a = 2
-        elif angle_todo < -0.05: a = 3
-        elif angle_todo > +0.05: a = 1
-    return a
-
-def demo_heuristic_lander(env, seed=None, render=False):
-    env.seed(seed)
-    total_reward = 0
-    steps = 0
-    s = env.reset()
-    while True:
-        a = heuristic(env, s)
-        s, r, done, info = env.step(a)
-        total_reward += r
-
-        if render:
-            still_open = env.render()
-            if still_open == False: break
-
-        if steps % 20 == 0 or done:
-            print("observations:", " ".join(["{:+0.2f}".format(x) for x in s]))
-            print("step {} total_reward {:+0.2f}".format(steps, total_reward))
-        steps += 1
-        if done: break
-    return total_reward
-
-
-if __name__ == '__main__':
-    demo_heuristic_lander(LunarLander(), render=True)

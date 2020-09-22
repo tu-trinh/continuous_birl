@@ -1,5 +1,5 @@
 import gym
-import cartpole_theta
+import lunarlander_theta
 import torch
 import numpy as np
 from train_optimal_agent import QNetwork
@@ -7,40 +7,49 @@ import pickle
 
 
 def get_human(episodes, t_delay=8, type="regular"):
-    env = gym.make("CartpoleTheta-v0")
-    qnetwork = QNetwork(state_size=4, action_size=2, seed=0)
-    qnetwork.load_state_dict(torch.load("models/cartpole_up.pth"))
+    env = gym.make('LunarLanderTheta-v0')
+    qnetwork = QNetwork(state_size=8, action_size=4, seed=1)
+    qnetwork.load_state_dict(torch.load("models/dqn_center.pth"))
     qnetwork.eval()
     softmax = torch.nn.Softmax(dim=1)
     dataset = []
     if type == "regular":
-        stoptime_lb = 200
+        stoptime_lb = 150
         noise_threshold = 0.0
     elif type == "noise":
-        stoptime_lb = 200
-        noise_threshold = 0.05
+        stoptime_lb = 150
+        noise_threshold = 0.4
     elif type == "counterfactual":
         stoptime_lb = 0
         noise_threshold = 0.0
     for episode in range(episodes):
-        stoptime = np.random.randint(stoptime_lb, 201)
-        state = env.reset(theta="up")
+        stoptime = np.random.randint(stoptime_lb, 151)
+        state = env.reset(theta="center")
         xi = []
         action = 0
-        for t in range(500):
+        episode_reward = 0
+        for t in range(1000):
             if t < stoptime and t%t_delay == 0:
                 with torch.no_grad():
                     state_t = torch.from_numpy(state).float().unsqueeze(0)
                     action_values = qnetwork(state_t)
                     action_values = softmax(action_values).cpu().data.numpy()[0]
                 action = np.argmax(action_values)
-            if np.random.random() < noise_threshold:
-                action = np.random.randint(0,2)
-            xi.append([action] + list(state))
+            elif t > stoptime:
+                action = 0
+            if np.random.random() < noise_threshold and t < 200:
+                action = np.random.randint(0,4)
             # env.render()              # can always toggle visualization
-            next_state, _, done, _ = env.step(action)
+            next_state, _, done, info = env.step(action)
+            awake = info["awake"]
+            reward = info["reward"]
+            xi.append([t] + [action] + [awake] + [state])
             state = next_state
+            episode_reward += reward
+
             if done:
+                print("\rReward: {:.2f}\tLanded: {}\tReward: {}"\
+                .format(episode_reward, awake, "center"), end="")
                 dataset.append(xi)
                 break
     env.close()
@@ -48,8 +57,6 @@ def get_human(episodes, t_delay=8, type="regular"):
 
 
 def main():
-
-    # play with the t_delay and number of demonstrations
 
     t_delay = 10
     demos = get_human(25, t_delay=t_delay, type="regular")

@@ -1,16 +1,15 @@
 import numpy as np
 import random
 from collections import namedtuple, deque
-import matplotlib.pyplot as plt
-import pickle
-import sys
 
 import gym
-import LunarLander_c1
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import pickle
+
+import lunarlander_theta
 
 BUFFER_SIZE = int(1e5)  # replay buffer size
 BATCH_SIZE = 64         # minibatch size
@@ -186,9 +185,7 @@ class ReplayBuffer:
         return len(self.memory)
 
 
-def train(agent,
-    n_episodes=4000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995,
-    savename="dqn.pth", reward_type=1):
+def train(agent, n_episodes=4000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995, theta=None):
     """Deep Q-Learning.
 
     Params
@@ -204,7 +201,7 @@ def train(agent,
     scores_window = deque(maxlen=100)  # last 100 scores
     eps = eps_start                    # initialize epsilon
     for i_episode in range(1, n_episodes+1):
-        state = env.reset(reward_type = reward_type)
+        state = env.reset(theta=theta)
         score = 0
         for t in range(max_t):
             action = agent.act(state, eps)
@@ -218,40 +215,14 @@ def train(agent,
         scores_window.append(score)       # save most recent score
         scores.append(score)              # save most recent score
         eps = max(eps_end, eps_decay*eps) # decrease epsilon
-        print('\rEpisode {}\tAverage Score: {:.2f}\tReward Type: {} '.\
-            format(i_episode, np.mean(scores_window), reward_type), end="")
+        print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
         if i_episode % 100 == 0:
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
-            torch.save(agent.qnetwork_local.state_dict(), savename)
-    torch.save(agent.qnetwork_local.state_dict(), savename)
-    env.close()
+            torch.save(agent.qnetwork_local.state_dict(), "models/dqn_" + theta + ".pth")
     return scores
 
 if __name__ == "__main__":
-    env = gym.make('LunarLanderC1-v0')
+    env = gym.make('LunarLanderTheta-v0')
     env.seed(0)
-    # Train networks using R1, R2 and R3
-    reward_types = [3]
-    # Toggle to train all 3 Q networks
-    train_all = False
-    for reward_type in reward_types:
-        file_name = "../models/dqn_R"+ str(reward_type) +".pth"
-        agent = Agent(state_size=8, action_size=4, seed=0)
-        scores = train(agent, savename=file_name, reward_type=reward_type)
-
-        # load the weights from file
-        agent.qnetwork_local.load_state_dict(torch.load(file_name))
-
-
-        for i in range(3):
-            state = env.reset(reward_type = reward_type)
-            for j in range(200):
-                action = agent.act(state)
-                env.render()
-                state, reward, done, _ = env.step(action)
-                if done:
-                    break
-
-        env.close()
-        if not train_all:
-            break
+    agent = Agent(state_size=8, action_size=4, seed=0)
+    scores = train(agent, theta="center")
