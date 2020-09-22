@@ -9,6 +9,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 import pickle
 
+import cartpole_theta
+
 BUFFER_SIZE = int(1e5)  # replay buffer size
 BATCH_SIZE = 64         # minibatch size
 GAMMA = 0.99            # discount factor
@@ -181,8 +183,7 @@ class ReplayBuffer:
         """Return the current size of internal memory."""
         return len(self.memory)
 
-def train(agent,
-    n_episodes=1500, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995):
+def train(agent, n_episodes=1500, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995, theta=None):
     """Deep Q-Learning.
 
     Params
@@ -199,10 +200,11 @@ def train(agent,
     eps = eps_start                    # initialize epsilon
     savenumber = 0
     for i_episode in range(1, n_episodes+1):
-        state = env.reset()
+        state = env.reset(theta=theta)
         score = 0
         for t in range(max_t):
             action = agent.act(state, eps)
+
             next_state, reward, done, _ = env.step(action)
             agent.step(state, action, reward, next_state, done)
             state = next_state
@@ -216,12 +218,12 @@ def train(agent,
         print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
         if i_episode % 100 == 0:
             print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
-            torch.save(agent.qnetwork_local.state_dict(), "../models/cartpole.pth")
+            torch.save(agent.qnetwork_local.state_dict(), "models/cartpole_" + theta + ".pth")
             savenumber += 1
     return scores
 
 if __name__ == "__main__":
-    env = gym.make("CartPole-v0")
+    env = gym.make("CartpoleTheta-v0")
     env.seed(0)
     agent = Agent(state_size=4, action_size=2, seed=0)
-    scores = train(agent)
+    scores = train(agent, theta="tilt")

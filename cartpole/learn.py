@@ -7,7 +7,7 @@ import pickle
 def Rup(xi):
     R = 0
     for waypoint in xi:
-        angle = waypoint[4]
+        angle = waypoint[3]
         if abs(abs(angle) - 0.0) < 0.1:
             R += 1
     return R / 200
@@ -16,7 +16,7 @@ def Rup(xi):
 def Rright(xi):
     R = 0
     for waypoint in xi:
-        action = waypoint[1]
+        action = waypoint[0]
         R = R + action
     return R / 200
 
@@ -24,7 +24,7 @@ def Rright(xi):
 def Rleft(xi):
     R = 0
     for waypoint in xi:
-        action = waypoint[1]
+        action = waypoint[0]
         R = R + 1 - action
     return R / 200
 
@@ -32,7 +32,7 @@ def Rleft(xi):
 def Rtilt(xi):
     R = 0
     for waypoint in xi:
-        angle = waypoint[4]
+        angle = waypoint[3]
         if abs(abs(angle) - np.pi/12) < 0.1:
             R += 1
     return R / 200
@@ -99,27 +99,28 @@ def birl_belief(beta, D, O):
 def main():
 
     #import trajectories (that could be choices)
-    D = pickle.load( open( "demos", "rb" ) )
-    E = pickle.load( open( "counterfactuals", "rb" ) )
-    N = pickle.load( open( "noisies", "rb" ) )
-    O = pickle.load( open( "optimals", "rb" ) )
+    D = pickle.load( open( "choices/demos.pkl", "rb" ) )
+    E = pickle.load( open( "choices/counterfactual.pkl", "rb" ) )
+    N = pickle.load( open( "choices/noisy.pkl", "rb" ) )
+    O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
 
     """ our approach, with counterfactuals """
     Xi_R = D + E
-    for beta in [0, 0.1, 0.5, 1]:
+    print(len(Xi_R))
+    for beta in [0.01, 0.1, 0.5]:
         b = get_belief(beta, D, Xi_R)
         plt.bar(range(4), b)
         plt.show()
 
     """ UT approach, with noise """
     Xi_R = D + N
-    for beta in [0, 0.1, 0.5, 1]:
+    for beta in [0.01, 0.1, 0.5]:
         b = get_belief(beta, D, Xi_R)
         plt.bar(range(4), b)
         plt.show()
 
     """ classic approach, with matching feature counts """
-    for beta in [0, 0.1, 0.5, 1]:
+    for beta in [0.01, 0.1, 0.5]:
         b = birl_belief(beta, D, O)
         plt.bar(range(4), b)
         plt.show()

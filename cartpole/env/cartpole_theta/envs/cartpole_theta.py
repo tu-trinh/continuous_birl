@@ -16,7 +16,7 @@ from gym.utils import seeding
 import numpy as np
 
 
-class CartPoleEnv(gym.Env):
+class CartpoleTheta(gym.Env):
     """
     Description:
         A pole is attached by an un-actuated joint to a cart, which moves along
@@ -132,23 +132,26 @@ class CartPoleEnv(gym.Env):
 
         self.state = (x, x_dot, theta, theta_dot)
 
-        done = bool(
-            x < -self.x_threshold
-            or x > self.x_threshold
-            or theta < -self.theta_threshold_radians
-            or theta > self.theta_threshold_radians
-        )
         done = False
-        if abs(abs(theta) - 0.0) < 0.1:
-            reward = 1.0
-        else:
-            reward = 0.0
+        reward = 0.0
+
+        if self.theta == "up":
+            if abs(abs(theta) - 0.0) < 0.1:
+                reward = 1.0
+        elif self.theta == "tilt":
+            if abs(abs(theta) - np.pi/12) < 0.1:
+                reward = 1.0
+        elif self.theta == "right":
+            reward = 1.0 * action
+        elif self.theta == "left":
+            reward = 1.0 - action
 
         return np.array(self.state), reward, done, {}
 
-    def reset(self):
+    def reset(self, theta):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
         self.steps_beyond_done = None
+        self.theta = theta
         return np.array(self.state)
 
     def render(self, mode='human'):
