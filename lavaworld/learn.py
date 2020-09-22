@@ -5,7 +5,7 @@ import pickle
 
 #parameterized reward function
 def R(xi, theta, lava):
-    n = len(xi)
+    n = xi.shape[0]
     smoothcost = 0
     for idx in range(n-1):
         smoothcost += np.linalg.norm(xi[idx+1,:] - xi[idx,:])**2
@@ -49,10 +49,10 @@ def birl_belief(beta, D, O):
 def main():
 
     #import trajectories (that could be choices)
-    D = pickle.load( open( "demos", "rb" ) )
-    E = pickle.load( open( "counterfactuals", "rb" ) )
-    N = pickle.load( open( "noisies", "rb" ) )
-    O = pickle.load( open( "optimals", "rb" ) )
+    D = pickle.load( open( "choices/demos.pkl", "rb" ) )
+    E = pickle.load( open( "choices/counterfactual.pkl", "rb" ) )
+    N = pickle.load( open( "choices/noisy.pkl", "rb" ) )
+    O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
 
     """ our approach, with counterfactuals """
     Xi_R = D + E
