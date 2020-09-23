@@ -28,12 +28,16 @@ class SimpleEnv():
         p.resetBasePositionAndOrientation(obj1.body_id, [0.7, -0.2, 0.1], [0, 0, 0, 1])
 
         # load some swarm robots
-        self.car1 = Racecar([3, 0.0, 0.05])
+        self.car1 = Racecar([-3, 0.0, 0.05])
         # self.car2 = Racecar([2, 0.0, 0.05])
         # self.car3 = Racecar([2, 0.25, 0.05])
 
     def close(self):
         p.disconnect()
+
+    def get_key_events(self):
+        keys = p.getKeyboardEvents()
+        return keys
 
     def step(self, action):
 

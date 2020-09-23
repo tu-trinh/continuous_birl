@@ -6,19 +6,24 @@ import pybullet as p
 env = SimpleEnv()
 start_time = time.time()
 curr_time = time.time() - start_time
+x = 0.0
+y = 0.0
 while curr_time < 2400*np.pi:
     curr_time = time.time() - start_time
-    x = 0.0
-    y = 0.0
-    events = p.getKeyboardEvents()
-    key_codes = events.keys()
-    for key in key_codes:
-        if key == "w":
-            x = 0.5
-        if key == "a":
+
+    # p.connect(p.GUI)
+    keys = env.get_key_events()
+    for k, v in keys.items():
+        if (k == 65298 and (v==1)):#6297
+            x = -0.5
+        if (k == 65296 and (v == 1)):
             y = 0.5
-        if key == "d":
-            y = 0
+        if (k == 65295 and (v == 1)):
+            y = -0.5
+        if (k == 65297 and (v==1)):#6297
+            x = 0.5
+
+    print(keys.items())
     action1 = [x, y]
     # action2 = [-0.5, 0]
     # action3 = [0.5, 0.5]
