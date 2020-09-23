@@ -15,14 +15,21 @@ while curr_time < 2400*np.pi:
     keys = env.get_key_events()
     for k, v in keys.items():
         if (k == 65298 and (v==1)):#6297
-            x = -0.5
+            x += -1.0
         if (k == 65296 and (v == 1)):
-            y = 0.5
+            y += 0.5
         if (k == 65295 and (v == 1)):
-            y = -0.5
+            y += -0.5
         if (k == 65297 and (v==1)):#6297
-            x = 0.5
-
+            x += 1.0
+    if x > 1.0:
+        x = 1.5
+    elif x < -1.0:
+        x = -1.5
+    if y > 0.5:
+        y = 0.5
+    elif y < -0.5:
+        y = -0.5
     print(keys.items())
     action1 = [x, y]
     # action2 = [-0.5, 0]
