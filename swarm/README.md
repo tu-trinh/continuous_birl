@@ -14,7 +14,7 @@ cd swarm-pybullet
 # Create a Conda Environment using `environment.yml`
 conda env create -f environment.yml
 ```
-If you get an error related to `libcxx`, include `conda-forge` to your conda channels by typing using the commands below.
+If you get an error related to `libcxx`, include `conda-forge` to your conda channels by using the commands below.
 ```bash
 # Add conda-forge to conda channels
 conda config --add channels conda-forge
