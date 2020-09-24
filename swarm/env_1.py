@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import random
 import pybullet as p
 import pybullet_data
 from car import Racecar
@@ -8,7 +9,7 @@ from objects import YCBObject, InteractiveObj, RBOObject
 
 class SimpleEnv():
 
-    def __init__(self):
+    def __init__(self, n_cars = 1):
         # create simulation (GUI)
         self.urdfRootPath = pybullet_data.getDataPath()
         p.connect(p.GUI)
@@ -17,51 +18,87 @@ class SimpleEnv():
         # set up camera
         self._set_camera()
 
+        # store car/cube data
+        self.cars = []
+        self.cubes = []
+
         # load some scene objects
         p.loadURDF(os.path.join(self.urdfRootPath, "plane.urdf"), basePosition=[0, 0, 0.1])
-        p.loadURDF(os.path.join("assets/basic/cube_static.urdf"), \
-                                    basePosition=[0, 0, 0.1])
 
-        # example YCB object
-        obj1 = YCBObject('003_cracker_box')
-        obj1.load()
-        p.resetBasePositionAndOrientation(obj1.body_id, [0.7, -0.2, 0.1], [0, 0, 0, 1])
+        # Load obstacles and cars
+        self._load_scene(n_cars)
 
-        # load some swarm robots
-        self.car1 = Racecar([-3, 0.0, 0.05])
-        # self.car2 = Racecar([2, 0.0, 0.05])
-        # self.car3 = Racecar([2, 0.25, 0.05])
 
     def close(self):
         p.disconnect()
 
-    def get_key_events(self):
-        keys = p.getKeyboardEvents()
-        return keys
-
-    def step(self, action):
+    def step(self, actions):
 
         # get current state
-        state = [self.car1.state]#, self.car2.state, self.car3.state]
+        state = []
+        for car in self.cars:
+            state.append(self.cars[0].state)
 
-        # action contains the speed and steering angle
-        action1 = [action[0], action[1]]
-        # action2 = [action[2], action[3]]
-        # action3 = [action[4], action[5]]
-        self.car1.step(speed=action1[0], angle=action1[1])
-        # self.car2.step(speed=action2[0], angle=action2[1])
-        # self.car3.step(speed=action3[0], angle=action3[1])
+        for i, action in enumerate(actions):
+            self.cars[i].step(speed=action[0], angle=action[1])
 
         # take simulation step
         p.stepSimulation()
 
         # return next_state, reward, done, info
-        next_state = [self.car1.state]#, self.car2.state, self.car3.state]
+        next_state = []
+        for car in self.cars:
+            next_state = [car.state]
         reward = 0.0
         done = False
         info = {}
         return next_state, reward, done, info
 
+    def _load_scene(self, instances):
+        # Location of goal
+        goal_x = 0
+        goal_y = 0
+        h = 0.1
+        car_spawn_radius = 1.5
+        cube_spawn_dist = 2.0
+
+        # Obstacle generation
+        min_angle = 0
+        max_angle = 30
+        stage_1_cubes = []
+        stage_2_cubes = []
+        cubes = []
+        for cube_no in range(8):
+            angle = np.random.randint(min_angle,max_angle) * np.pi/180.0
+            x = goal_x + cube_spawn_dist * np.sin(angle)
+            y = goal_y + cube_spawn_dist * np.cos(angle)
+            cubeId = p.loadURDF(os.path.join("assets/basic/cube_static.urdf"), \
+                                basePosition=[x, y, 0.5])
+            if cube_no == 3:
+                min_angle = 40
+                max_angle = 60
+                cube_spawn_dist = 2*cube_spawn_dist
+            else:
+                min_angle += 90
+                max_angle += 90
+            if cube_no < 4:
+                stage_1_cubes.append([cubeId, x, y])
+            else:
+                stage_2_cubes.append([cubeId, x, y])
+            self.cubes.append([cubeId, x, y])
+        
+        # Get random starting locations for cars
+        starting_cubes = random.sample(stage_2_cubes, instances)
+
+        for cube in starting_cubes:
+            angle = np.random.randint(min_angle, max_angle) * np.pi/180.0
+            car_x =  cube[1] + car_spawn_radius * np.sin(angle)
+            car_y = cube[2] + car_spawn_radius * np.cos(angle)
+            car = Racecar([car_x, car_y, h])
+            self.cars.append(car)
+        # closest_points = p.getClosestPoints(car.get_car_id(),cube,100)
+            
+   
     def render(self):
         (width, height, pxl, depth, segmentation) = p.getCameraImage(width=self.camera_width,
                                                                      height=self.camera_height,
@@ -87,3 +124,4 @@ class SimpleEnv():
                                                         aspect=float(self.camera_width) / self.camera_height,
                                                         nearVal=0.1,
                                                         farVal=100.0)
+
