@@ -28,6 +28,8 @@ class Racecar():
         # update robot state measurement
         self._read_state()
 
+    def get_car_id(self):
+        return self.car
 
     """internal functions"""
 
