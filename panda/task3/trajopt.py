@@ -46,7 +46,7 @@ class TrajOpt(object):
         """ create initial trajectory """
         self.xi0 = np.zeros((self.n_waypoints,self.n_joints))
         for idx in range(self.n_waypoints):
-            self.xi0[idx,:] = self.home# - idx * np.asarray([-0.1, 0.1, 0, 0, 0, 0, 0])
+            self.xi0[idx,:] = self.home
         self.xi0 = self.xi0.reshape(-1)
         """ create start point equality constraint """
         self.B = np.zeros((self.n_joints, self.n_joints * self.n_waypoints))
@@ -98,16 +98,17 @@ class TrajOpt(object):
         # make vertical
         verticalcost = 0
         for idx in range(1, self.n_waypoints):
-            verticalcost += (self.alignx[idx,0])**2
+            verticalcost += abs(self.alignx[idx,0])**2
         # make tilt
         tiltcost = 0
-        for idx in range(2, 5):
-            tiltcost += (-1 - self.alignx[idx,0])**2
+        tilt_end = int(1 + self.theta * 10)
+        for idx in range(1, tilt_end):
+            tiltcost += abs(1 - abs(self.alignx[idx,0]))**2
         # make trajectory go to goal
         goalposition = np.array([0.75, -0.35, 0.1])
         goalcost = np.linalg.norm(self.gamma[-1,:] - goalposition)**2 * 10
         # weight each cost element
-        return smoothcost + self.theta[0]*goalcost + self.theta[1]*verticalcost + self.theta[2]*tiltcost
+        return smoothcost + goalcost + verticalcost + tiltcost
 
     """ use scipy optimizer to get optimal trajectory """
     def optimize(self, method='SLSQP'):
@@ -119,11 +120,9 @@ class TrajOpt(object):
 
 def main():
 
-    theta1 = float(sys.argv[1])
-    theta2 = float(sys.argv[2])
-    theta3 = float(sys.argv[3])
+    theta = float(sys.argv[1])
 
-    opt = TrajOpt(theta=[theta1, theta2, theta3])
+    opt = TrajOpt(theta=theta)
     xi, res, solve_time = opt.optimize()
     opt.trajcost(xi)
     print("it took me this long to solve: ", solve_time)

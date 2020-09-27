@@ -37,7 +37,7 @@ class Trajectory(object):
 
 class TrajOpt(object):
 
-    def __init__(self, theta=None, n_waypoints=4, home=np.array([0, -np.pi/4, 0, -3*np.pi/4, 0, np.pi/2, np.pi/4])):
+    def __init__(self, theta=None, n_waypoints=11, home=np.array([0, -np.pi/4, 0, -3*np.pi/4, 0, np.pi/2, np.pi/4])):
         """ set hyperparameters """
         self.theta = theta
         self.n_waypoints = n_waypoints
@@ -124,38 +124,37 @@ class TrajOpt(object):
 def get_optimal(theta):
     opt = TrajOpt(theta=theta)
     xi, res, solve_time = opt.optimize()
-    print("it took me this long to solve: ", solve_time)
 
-    T = 5.0
+    T = 10.0
     traj = Trajectory(xi, T)
     env = Task()
     state = env.reset()
-    count = 0
-    max_count = 10001
-    timesteps = np.linspace(0, T, max_count)
-    xi = []
-    while count < max_count:
-        curr_time = timesteps[count]
-        if count % 1000 == 0:
-            xi.append(state["joint_position"][0:7].tolist())
-        count += 1
+    start_time = time.time()
+    curr_time = time.time() - start_time
+    while curr_time < T+0.5:
         q_des = traj.get(curr_time)
         qdot = 10 * (q_des - state["joint_position"][0:7])
         next_state, reward, done, info = env.step(qdot)
         state = next_state
+        curr_time = time.time() - start_time
     env.close()
-    return [xi]
+
+    return xi
 
 
 def main():
 
-    optimals = {'all': [], 'goal': [], 'height': [], 'obs': []}
-    optimals['all'] = get_optimal([1.0, 1.0, 1.0])
-    optimals['goal'] = get_optimal([0.2, 1.0, 1.0])
-    optimals['height'] = get_optimal([1.0, 0.5, 1.0])
-    optimals['obs'] = get_optimal([1.0, 1.0, 0.0])
-    pickle.dump( optimals, open( "choices/optimal.pkl", "wb" ) )
+    THETA1 = [1, 1, 1]
+    THETA2 = [0.2, 1, 1]
+    THETA3 = [1, 0.1, 1]
+    THETA4 = [1, 1, 0]
 
+    optimals = {'all': [], 'goal': [], 'height': [], 'obs': []}
+    optimals['all'].append(get_optimal(THETA1))
+    optimals['goal'].append(get_optimal(THETA2))
+    optimals['height'].append(get_optimal(THETA3))
+    optimals['obs'].append(get_optimal(THETA4))
+    pickle.dump( optimals, open( "choices/optimal.pkl", "wb" ) )
 
 if __name__ == "__main__":
     main()

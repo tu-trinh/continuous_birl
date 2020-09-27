@@ -46,7 +46,7 @@ class TrajOpt(object):
         """ create initial trajectory """
         self.xi0 = np.zeros((self.n_waypoints,self.n_joints))
         for idx in range(self.n_waypoints):
-            self.xi0[idx,:] = self.home# - idx * np.asarray([-0.1, 0.1, 0, 0, 0, 0, 0])
+            self.xi0[idx,:] = self.home
         self.xi0 = self.xi0.reshape(-1)
         """ create start point equality constraint """
         self.B = np.zeros((self.n_joints, self.n_joints * self.n_waypoints))
@@ -57,6 +57,7 @@ class TrajOpt(object):
         self.alignx = np.zeros((self.n_waypoints, 3))
         self.aligny = np.zeros((self.n_waypoints, 3))
         self.alignz = np.zeros((self.n_waypoints, 3))
+
 
     """ forward kinematics of panda robot arm """
     def joint2pose(self, q):
@@ -100,12 +101,8 @@ class TrajOpt(object):
             verticalcost += abs(self.alignx[idx,0])**2
         # make tilt
         tiltcost = 0
-        tilt_end = 2
-        if self.theta[0] == 0.5:
-            tilt_end = 7
-        elif self.theta[0] == 0.75:
-            tilt_end = 5
-        for idx in range(2, tilt_end):
+        tilt_end = int(1 + self.theta * 10)
+        for idx in range(1, tilt_end):
             tiltcost += abs(1 - abs(self.alignx[idx,0]))**2
         # make trajectory go to goal
         goalposition = np.array([0.75, -0.35, 0.1])
@@ -144,14 +141,14 @@ def get_optimal(theta):
 
 def main():
 
-    THETA1 = np.asarray([0.5, 0.5])
-    THETA2 = np.asarray([0.75, 0.25])
-    THETA3 = np.asarray([1.0, 0.0])
+    THETA1 = 0.5
+    THETA2 = 0.25
+    THETA3 = 0.0
 
-    optimals = {'0.5': [], '0.75': [], '1.0': []}
+    optimals = {'0.5': [], '0.25': [], '0.0': []}
     optimals['0.5'].append(get_optimal(THETA1))
-    optimals['0.75'].append(get_optimal(THETA2))
-    optimals['1.0'].append(get_optimal(THETA3))
+    optimals['0.25'].append(get_optimal(THETA2))
+    optimals['0.0'].append(get_optimal(THETA3))
     pickle.dump( optimals, open( "choices/optimal.pkl", "wb" ) )
 
 

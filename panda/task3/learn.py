@@ -41,17 +41,14 @@ def trajcost(xi, theta):
         else:
             pours +=1
     # weight each cost element
-    return theta[0]*pours / 10. + theta[1]*straights / 10.
+    return (1 - theta) * pours / 10. + theta * straights / 10.
 
 
 
 BETA = [0.1, 0.5, 1.0]
-THETA1 = np.asarray([0.5, 0.5])
-THETA2 = np.asarray([0.75, 0.25])
-THETA3 = np.asarray([1.0, 0.0])
-THETA2 /= np.linalg.norm(THETA2)
-THETA1 /= np.linalg.norm(THETA1)
-THETA3 /= np.linalg.norm(THETA3)
+THETA1 = 0.5
+THETA2 = 0.25
+THETA3 = 0.0
 THETA = [THETA1, THETA2, THETA3]
 
 
@@ -77,8 +74,8 @@ def birl_belief(beta, D, O):
     avg_c3 = sum([trajcost(xi, THETA[2]) for xi in D]) / len(D)
 
     opt_c1 = trajcost(O["0.5"][0], THETA[0])
-    opt_c2 = trajcost(O["0.75"][0], THETA[1])
-    opt_c3 = trajcost(O["1.0"][0], THETA[2])
+    opt_c2 = trajcost(O["0.25"][0], THETA[1])
+    opt_c3 = trajcost(O["0.0"][0], THETA[2])
 
     p1 = np.exp(-beta*avg_c1)/np.exp(-beta*opt_c1)
     p2 = np.exp(-beta*avg_c2)/np.exp(-beta*opt_c2)

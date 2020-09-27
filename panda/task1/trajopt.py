@@ -46,7 +46,7 @@ class TrajOpt(object):
         """ create initial trajectory """
         self.xi0 = np.zeros((self.n_waypoints,self.n_joints))
         for idx in range(self.n_waypoints):
-            self.xi0[idx,:] = self.home - idx * np.asarray([-0.1, 0.1, 0, 0, 0, 0, 0])
+            self.xi0[idx,:] = self.home - idx * np.asarray([-0.1, -0.2, 0, 0, 0, 0, 0])
         self.xi0 = self.xi0.reshape(-1)
         """ create start point equality constraint """
         self.B = np.zeros((self.n_joints, self.n_joints * self.n_waypoints))
@@ -111,7 +111,7 @@ class TrajOpt(object):
             heightcost += self.gamma_end[idx,2]**2
         # weight each cost element
         return 0.2*smoothcost_xi + self.theta[0]*goalcost + \
-            self.theta[1]*heightcost + self.theta[2]*obscost / 2.0
+            self.theta[1]*heightcost + self.theta[2]*obscost * 4
 
     """ use scipy optimizer to get optimal trajectory """
     def optimize(self, method='SLSQP'):

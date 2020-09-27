@@ -1,14 +1,11 @@
 import numpy as np
-import math
 import pickle
 import time
 import copy
-from scipy.optimize import minimize
-from scipy.optimize import LinearConstraint
 from scipy.interpolate import interp1d
 from env import Task
-import sys
 import os
+
 
 class Trajectory(object):
 

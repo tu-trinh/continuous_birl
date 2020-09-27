@@ -65,11 +65,19 @@ def trajcost(xi, theta):
         theta[1]*heightcost + theta[2]*obscost * 4.0
 
 
+
+BETA = [0.01, 0.05, 0.1]
+THETA1 = [1, 1, 1]
+THETA2 = [0.2, 1, 1]
+THETA3 = [1, 0.1, 1]
+THETA4 = [1, 1, 0]
+THETA = [THETA1, THETA2, THETA3, THETA4]
+
+
 #bayesian inference for each reward given demonstrations and choice set
 def get_belief(beta, D, Xi_R):
 
     p = []
-    THETA = [[1, 1, 1], [0.2, 1, 1], [1, 0.5, 1], [1, 1, 0]]
     for theta in THETA:
         n = np.exp(-beta*sum([trajcost(xi, theta) for xi in D]))
         d = sum([np.exp(-beta*trajcost(xi, theta)) for xi in Xi_R])**len(D)
@@ -84,23 +92,21 @@ def get_belief(beta, D, Xi_R):
 #comparison to optimal feature counts
 def birl_belief(beta, D, O):
 
-    n1 = np.exp(-beta*sum([trajcost(xi, [1, 1, 1]) for xi in D]))
-    d1 = np.exp(-beta*sum([trajcost(xi, [1, 1, 1]) for xi in O["all"]]))
-    p1 = n1/d1
+    avg_c1 = sum([trajcost(xi, THETA[0]) for xi in D]) / len(D)
+    avg_c2 = sum([trajcost(xi, THETA[1]) for xi in D]) / len(D)
+    avg_c3 = sum([trajcost(xi, THETA[2]) for xi in D]) / len(D)
+    avg_c4 = sum([trajcost(xi, THETA[3]) for xi in D]) / len(D)
 
-    n2 = np.exp(-beta*sum([trajcost(xi, [0.2, 1, 1]) for xi in D]))
-    d2 = np.exp(-beta*sum([trajcost(xi, [0.2, 1, 1]) for xi in O["goal"]]))
-    p2 = n2/d2
+    opt_c1 = trajcost(O["all"][0], THETA[0])
+    opt_c2 = trajcost(O["goal"][0], THETA[1])
+    opt_c3 = trajcost(O["height"][0], THETA[2])
+    opt_c4 = trajcost(O["obs"][0], THETA[2])
 
-    n3 = np.exp(-beta*sum([trajcost(xi, [1, 0.5, 1]) for xi in D]))
-    d3 = np.exp(-beta*sum([trajcost(xi, [1, 0.5, 1]) for xi in O["height"]]))
-    p3 = n3/d3
+    p1 = np.exp(-beta*avg_c1)/np.exp(-beta*opt_c1)
+    p2 = np.exp(-beta*avg_c2)/np.exp(-beta*opt_c2)
+    p3 = np.exp(-beta*avg_c3)/np.exp(-beta*opt_c3)
+    p4 = np.exp(-beta*avg_c4)/np.exp(-beta*opt_c4)
 
-    n4 = np.exp(-beta*sum([trajcost(xi, [1, 1, 0]) for xi in D]))
-    d4 = np.exp(-beta*sum([trajcost(xi, [1, 1, 0]) for xi in O["obs"]]))
-    p4 = n4/d4
-
-    #normalize and print belief
     Z = p1 + p2 + p3 + p4
     b = [p1/Z, p2/Z, p3/Z, p4/Z]
     return b
@@ -110,28 +116,43 @@ def main():
 
     #import trajectories (that could be choices)
     D = pickle.load( open( "choices/demos.pkl", "rb" ) )
-    E = pickle.load( open( "choices/counterfactual.pkl", "rb" ) )
+    R = pickle.load( open( "choices/rescaled.pkl", "rb" ) )
     N = pickle.load( open( "choices/noisy.pkl", "rb" ) )
+    S = pickle.load( open( "choices/sparse.pkl", "rb" ) )
     O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
 
-    """ our approach, with counterfactuals """
-    Xi_R = D + E
-    for beta in [0.01, 0.05, 0.1]:
+    """ our approach, with rescaled """
+    Xi_R = D + R
+    for beta in BETA:
         b = get_belief(beta, D, Xi_R)
-        plt.bar(range(4), b)
+        plt.bar(range(len(b)), b)
         plt.show()
 
-    """ UT approach, with noise """
+    """ our approach, with noise """
     Xi_R = D + N
-    for beta in [0.01, 0.05, 0.1]:
+    for beta in BETA:
         b = get_belief(beta, D, Xi_R)
-        plt.bar(range(4), b)
+        plt.bar(range(len(b)), b)
+        plt.show()
+
+    """ our approach, with sparse """
+    Xi_R = D + S
+    for beta in BETA:
+        b = get_belief(beta, D, Xi_R)
+        plt.bar(range(len(b)), b)
+        plt.show()
+
+    """ our approach, all """
+    Xi_R = D + R + N + S
+    for beta in BETA:
+        b = get_belief(beta, D, Xi_R)
+        plt.bar(range(len(b)), b)
         plt.show()
 
     """ classic approach, with matching feature counts """
-    for beta in [0.01, 0.05, 0.1]:
+    for beta in BETA:
         b = birl_belief(beta, D, O)
-        plt.bar(range(4), b)
+        plt.bar(range(len(b)), b)
         plt.show()
 
 
