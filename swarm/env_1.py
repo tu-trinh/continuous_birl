@@ -22,12 +22,26 @@ class SimpleEnv():
         self.cars = []
         self.cubes = []
 
+        # Location of goal
+        self.goal = [0.0, 0.0]
+
         # load some scene objects
         p.loadURDF(os.path.join(self.urdfRootPath, "plane.urdf"), basePosition=[0, 0, 0.1])
 
         # Load obstacles and cars
         self._load_scene(n_cars)
-
+        
+        # Some constraints
+        self.dt = 0.5
+        self.max_speed = 1.0
+        self.min_speed = -0.5
+        self.max_angle = 0.5
+        self.max_acc = 1.0
+        self.max_delta_yaw = 0.1
+        self.resolution = 0.1
+        self.car_radius = 0.6
+        self.goal_cost_gain = 1.0
+        self.predict_time = 0.10
 
     def close(self):
         p.disconnect()
@@ -47,17 +61,20 @@ class SimpleEnv():
 
         # return next_state, reward, done, info
         next_state = []
+        done = True
         for car in self.cars:
             next_state = [car.state]
+            done =done and self.goal_reached(car)
         reward = 0.0
-        done = False
         info = {}
         return next_state, reward, done, info
+    
+    def get_cars(self):
+        return self.cars
 
-    def _load_scene(self, instances):
-        # Location of goal
-        goal_x = 0
-        goal_y = 0
+    def _load_scene(self, n_cars):
+        goal_x = self.goal[0]
+        goal_y = self.goal[1]
         h = 0.1
         car_spawn_radius = 1.5
         cube_spawn_dist = 2.0
@@ -88,15 +105,114 @@ class SimpleEnv():
             self.cubes.append([cubeId, x, y])
         
         # Get random starting locations for cars
-        starting_cubes = random.sample(stage_2_cubes, instances)
+        starting_cubes = random.sample(stage_2_cubes, n_cars)
 
         for cube in starting_cubes:
             angle = np.random.randint(min_angle, max_angle) * np.pi/180.0
             car_x =  cube[1] + car_spawn_radius * np.sin(angle)
             car_y = cube[2] + car_spawn_radius * np.cos(angle)
             car = Racecar([car_x, car_y, h])
+            phi = np.arctan2(car_y, car_x) - np.pi
+            q = p.getQuaternionFromEuler((0, 0, phi))
+            carId = car.get_car_id()
+            # p.resetBasePositionAndOrientation(carId,(car_x,car_y,h),q)
             self.cars.append(car)
-        # closest_points = p.getClosestPoints(car.get_car_id(),cube,100)
+
+    def goal_reached(self, car):
+        carId = car.get_car_id()
+        car_pos_orient = p.getBasePositionAndOrientation(carId)
+        car_pos = car_pos_orient[0]
+        dist = np.sqrt((car_pos[0] - self.goal[0])**2 + (car_pos[1] - self.goal[1])**2)
+        if  dist < 0.75:
+            return True
+        else:
+            return False
+
+    def _transform_coords(self, angle, pos, ref_pos):
+        rot_matrix = np.matrix([[np.cos(angle), -np.sin(angle)],
+                                [np.sin(angle), np.cos(angle)]])
+        transformed_pos = rot_matrix * np.array([[pos[0], pos[1]]]).T
+        transformed_x = ref_pos[0] + transformed_pos[0]
+        transformed_y = ref_pos[1] + transformed_pos[1]
+        return [transformed_x, transformed_y]
+
+    def _get_goal_cost(self, pos):
+        # make sure goal and car are at the same height
+        cost_to_goal = np.sqrt((pos[0] - self.goal[0])**2 + (pos[1] - self.goal[1])**2)
+        return cost_to_goal
+    def _get_boundaries(self, car_pos):
+        # Get car boundaries
+        car_boundaries = []
+        car_boundaries.append([car_pos[0], car_pos[1] + 0.33/2])
+        car_boundaries.append([car_pos[0], car_pos[1] - 0.33/2])
+        car_boundaries.append([car_pos[0] + 0.5, car_pos[1] + 0.33/2])
+        car_boundaries.append([car_pos[0] + 0.5, car_pos[1] - 0.33/2])
+        return car_boundaries
+
+    def _get_obstacle_cost(self, car_yaw, new_car_pos, car_pos):
+        obs_dists = []
+        new_car_boundaries = self._get_boundaries(new_car_pos)
+        # for boundary in new_car_boundaries:
+        transformed_boundary = self._transform_coords(car_yaw, new_car_pos, car_pos)
+        for cube in self.cubes:
+            cube_x = cube[1]
+            cube_y = cube[2]
+            transformed_x = transformed_boundary[0]
+            transformed_y = transformed_boundary[1]
+            distance_cube = (transformed_x - cube_x)**2 + (transformed_y - cube_y)**2
+            obs_dists.append(distance_cube)
+        min_obs_dist = np.min(obs_dists)
+
+        # boundaries = self._get_boundaries(car_pos)
+        # print("new_car_boundaries: {}".format(boundaries))
+        # print("min_obs_dist: {}".format(min_obs_dist))
+        # wait = input("PRESS ENTER TO CONTINUE.")
+        if min_obs_dist < 1.1:
+            obs_cost = float("inf")
+            return obs_cost
+        else:
+            obs_cost = min_obs_dist
+        return 1.0/obs_cost 
+
+    def get_action(self, car):
+        carId = car.get_car_id()
+        car_pos_orient = p.getBasePositionAndOrientation(carId)
+        car_pos = car_pos_orient[0]
+        car_quaternion = car_pos_orient[1]
+        car_orient = p.getEulerFromQuaternion(car_quaternion)
+        car_yaw = car_orient[2]
+        car_actions = car.get_current_actions()
+
+        # minimum cost of position
+        min_cost = float("inf")
+        best_action = [0.0, 0.0]
+
+        for vel in np.arange(-0.5,2.0,0.2):
+            for steer in np.arange(-0.5,0.5,0.1):
+                new_car_x = vel * np.cos(steer) * self.dt
+                new_car_y = vel * np.sin(steer) * self.dt
+                new_car_pos = [new_car_x, new_car_y]
+                transformed_pos = self._transform_coords(car_yaw,\
+                                         [new_car_x, new_car_y], car_pos)
+                distance_goal = self._get_goal_cost(transformed_pos)
+                obs_cost = self._get_obstacle_cost(car_yaw, new_car_pos, car_pos)
+                # obs_cost = 0
+                cost = 100*distance_goal + 25*obs_cost
+                # print("----")
+                # print("cost: ",cost)
+                # print("transformed_pos: ", transformed_pos)
+                # print("distance_goal: ", distance_goal)
+                if cost < min_cost:
+                    best_pos = new_car_pos
+                    min_cost = cost
+                    best_steer = steer
+                    best_vel = vel
+        # escape out of local minima
+
+        best_action = [best_vel, best_steer]
+        # print("pos: {}\tcost: {}\taction: {}".format(best_pos, min_cost, best_action))
+        return best_action
+
             
    
     def render(self):
@@ -112,12 +228,12 @@ class SimpleEnv():
     def _set_camera(self):
         self.camera_width = 256
         self.camera_height = 256
-        p.resetDebugVisualizerCamera(cameraDistance=1.5, cameraYaw=20, cameraPitch=-30,
+        p.resetDebugVisualizerCamera(cameraDistance=7.8, cameraYaw=0, cameraPitch=-91,
                                      cameraTargetPosition=[0.5, -0.2, 0.0])
-        self.view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0.5, 0, 0],
-                                                               distance=1.0,
-                                                               yaw=90,
-                                                               pitch=-50,
+        self.view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0.5, -0.0, 0],
+                                                               distance=7.8,
+                                                               yaw=0,
+                                                               pitch=-91,
                                                                roll=0,
                                                                upAxisIndex=2)
         self.proj_matrix = p.computeProjectionMatrixFOV(fov=60,
