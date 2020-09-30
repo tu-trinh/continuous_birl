@@ -31,9 +31,6 @@ class Racecar():
     def get_car_id(self):
         return self.car
 
-    def get_car_pos(self):
-        return p.getBasePositionAndOrientation(self.car)
-
     def get_current_actions(self):
         joint_state = p.getJointState(self.car, self.steering[0])
         steer = joint_state[0]

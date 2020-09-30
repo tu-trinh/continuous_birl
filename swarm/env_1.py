@@ -20,7 +20,8 @@ class SimpleEnv():
 
         # store car/cube data
         self.cars = []
-        self.cubes = []
+        self.obstacles = []
+        self.prev_pos = []
 
         # Location of goal
         self.goal = [0.0, 0.0]
@@ -33,8 +34,8 @@ class SimpleEnv():
         
         # Some constraints
         self.dt = 0.5
-        self.goal_cost_gain = 100
-        self.obstacle_cost_gain = 25
+        self.goal_cost_gain = 1
+        self.obstacle_cost_gain = 1
 
     def close(self):
         p.disconnect()
@@ -52,16 +53,15 @@ class SimpleEnv():
         # take simulation step
         p.stepSimulation()
 
-        # return next_state, reward, done, info
         next_state = []
         done = True
         for car in self.cars:
             next_state = [car.state]
-            done =done and self.goal_reached(car)
+            done = done and self.goal_reached(car)
         reward = 0.0
         info = {}
         return next_state, reward, done, info
-    
+
     def get_cars(self):
         return self.cars
 
@@ -70,46 +70,53 @@ class SimpleEnv():
         car_pos_orient = p.getBasePositionAndOrientation(carId)
         car_pos = car_pos_orient[0]
         dist = np.sqrt((car_pos[0] - self.goal[0])**2 + (car_pos[1] - self.goal[1])**2)
-        if  dist < 0.75:
+        if  dist < 1.0:
             return True
         else:
             return False
 
-    def get_min_dist(self, pos):
-        obs_dists = []
-        for cube in self.cubes:
-            cube_x = cube[1]
-            cube_y = cube[2]
-            distance_cube = (pos[0] - cube_x)**2 + (pos[1] - cube_y)**2
-            obs_dists.append(distance_cube)
-        min_obs_dist = np.min(obs_dists)
-        return min_obs_dist
+    def get_obs_dist(self, pos, carId):
+        min_dist = float("inf")
+        for i,obstacle in enumerate(self.obstacles):
+            obstacleId = obstacle[0]
+            if not (obstacleId == carId):
+                cube_x = obstacle[1]
+                cube_y = obstacle[2]
+                distance_cube = (pos[0] - cube_x)**2 + (pos[1] - cube_y)**2
+                if distance_cube < min_dist:
+                    idx = i
+                    min_dist = distance_cube
+        return idx, min_dist
 
     def get_closest_car(self):
         min_dist = float("inf")
         for i,car in enumerate(self.cars):
-            carId = car.get_car_id()
-            car_pos_orient = p.getBasePositionAndOrientation(carId)
-            car_pos = car_pos_orient[0]
-            closest_dist = self.get_min_dist(car_pos)
-            if closest_dist < min_dist:
-                closest_car = car
-                closest_ind = i
+            if not self.goal_reached(car):
+                carId = car.get_car_id()
+                car_pos_orient = p.getBasePositionAndOrientation(carId)
+                car_pos = car_pos_orient[0]
+                _,closest_dist = self.get_obs_dist(car_pos, carId)
+                if closest_dist < min_dist:
+                    closest_car = car
+                    closest_ind = i
+                    min_dist = closest_dist
+            # print("car: {}\t dist: {}"\
+            #     .format(closest_car.get_car_id(), closest_dist))
         return closest_ind, closest_car
 
-    def get_action(self, car):
-        carId = car.get_car_id()
+    def get_action(self, index):
+        carId = self.cars[index].get_car_id()
         car_pos_orient = p.getBasePositionAndOrientation(carId)
         car_pos = car_pos_orient[0]
         car_quaternion = car_pos_orient[1]
         car_orient = p.getEulerFromQuaternion(car_quaternion)
         car_yaw = car_orient[2]
-        car_actions = car.get_current_actions()
         # minimum cost of position
         min_cost = float("inf")
-        best_action = [0.0, 0.0]
+        best_vel = 0.0
+        best_steer = 0.0
 
-        for vel in np.arange(-0.5,2.0,0.3):
+        for vel in [-1.5, 2.0]:
             for steer in np.arange(-0.5,0.5,0.1):
                 new_car_x = vel * np.cos(steer) * self.dt
                 new_car_y = vel * np.sin(steer) * self.dt
@@ -117,20 +124,17 @@ class SimpleEnv():
                 transformed_pos = self._transform_coords(car_yaw,\
                                          [new_car_x, new_car_y], car_pos)
                 distance_goal = self._get_goal_cost(transformed_pos)
-                obs_cost = self._get_obstacle_cost(car_yaw, new_car_pos, car_pos)
+                obs_cost = self._get_obstacle_cost(car_yaw, new_car_pos, car_pos, carId)
                 cost = self.goal_cost_gain * distance_goal +\
                          self.obstacle_cost_gain * obs_cost
-                # print("----")
-                # print("cost: ",cost)
-                # print("transformed_pos: ", transformed_pos)
-                # print("distance_goal: ", distance_goal)
+
                 if cost < min_cost:
                     best_pos = new_car_pos
                     min_cost = cost
                     best_steer = steer
                     best_vel = vel
+
         best_action = [best_vel, best_steer]
-        # print("pos: {}\tcost: {}\taction: {}".format(best_pos, min_cost, best_action))
         return best_action
    
     def render(self):
@@ -155,7 +159,7 @@ class SimpleEnv():
         goal_x = self.goal[0]
         goal_y = self.goal[1]
         h = 0.1
-        car_spawn_radius = 2.5
+        car_spawn_radius = np.random.uniform(1.5, 2.5)
         cube_spawn_dist = 2.0
 
         # Obstacle generation
@@ -163,7 +167,6 @@ class SimpleEnv():
         max_angle = 30
         stage_1_cubes = []
         stage_2_cubes = []
-        cubes = []
         for cube_no in range(8):
             angle = np.random.randint(min_angle,max_angle) * np.pi/180.0
             x = goal_x + cube_spawn_dist * np.sin(angle)
@@ -181,8 +184,8 @@ class SimpleEnv():
                 stage_1_cubes.append([cubeId, x, y])
             else:
                 stage_2_cubes.append([cubeId, x, y])
-            self.cubes.append([cubeId, x, y])
-        
+            self.obstacles.append([cubeId, x, y])
+
         # Get random starting locations for cars
         starting_cubes = random.sample(stage_2_cubes, n_cars)
         min_angle = 0
@@ -197,8 +200,11 @@ class SimpleEnv():
             phi = np.arctan2(car_y, car_x) - np.pi
             q = p.getQuaternionFromEuler((0, 0, phi))
             carId = car.get_car_id()
-            p.resetBasePositionAndOrientation(carId,(car_x,car_y,h),q)
+            car_pos = [car_x, car_y, h]
+            p.resetBasePositionAndOrientation(carId,car_pos,q)
             self.cars.append(car)
+            self.obstacles.append([carId, car_x, car_y])
+            # self.prev_pos.append(car_pos)
 
     def _get_goal_cost(self, pos):
         # make sure goal and car are at the same height
@@ -208,26 +214,18 @@ class SimpleEnv():
     def _get_boundaries(self, car_pos):
         # Get car boundaries
         car_boundaries = []
-        car_boundaries.append([car_pos[0], car_pos[1] + 0.33/2])
-        car_boundaries.append([car_pos[0], car_pos[1] - 0.33/2])
-        car_boundaries.append([car_pos[0] + 0.5, car_pos[1] + 0.33/2])
-        car_boundaries.append([car_pos[0] + 0.5, car_pos[1] - 0.33/2])
+        car_boundaries.append([car_pos[0], car_pos[1] + 0.4/2])
+        car_boundaries.append([car_pos[0], car_pos[1] - 0.4/2])
+        car_boundaries.append([car_pos[0] + 0.5, car_pos[1] + 0.4/2])
+        car_boundaries.append([car_pos[0] + 0.5, car_pos[1] - 0.4/2])
         return car_boundaries
 
-    def _get_obstacle_cost(self, car_yaw, new_car_pos, car_pos):
+    def _get_obstacle_cost(self, car_yaw, new_car_pos, car_pos, carId):
         obs_dists = []
         new_car_boundaries = self._get_boundaries(new_car_pos)
         # for boundary in new_car_boundaries:
         transformed_boundary = self._transform_coords(car_yaw, new_car_pos, car_pos)
-        # transformed_x = transformed_boundary[0]
-        # transformed_y = transformed_boundary[1]
-
-        # for cube in self.cubes:
-        #     cube_x = cube[1]
-        #     cube_y = cube[2]
-        #     distance_cube = (transformed_x - cube_x)**2 + (transformed_y - cube_y)**2
-        #     obs_dists.append(distance_cube)
-        min_obs_dist = self.get_min_dist(transformed_boundary)
+        _, min_obs_dist = self.get_obs_dist(transformed_boundary, carId)
         if min_obs_dist < 1.1:
             obs_cost = float("inf")
             return obs_cost
