@@ -99,6 +99,10 @@ class TrajOpt(object):
         verticalcost = 0
         for idx in range(1, self.n_waypoints):
             verticalcost += abs(self.alignx[idx,0])**2
+        # height cost
+        heightcost = 0
+        for idx in range(1, self.n_waypoints):
+            heightcost += (0.3 - abs(self.gamma[idx,2]))**2
         # make tilt
         tiltcost = 0
         tilt_end = int(1 + self.theta * 10)
@@ -108,7 +112,7 @@ class TrajOpt(object):
         goalposition = np.array([0.75, -0.35, 0.1])
         goalcost = np.linalg.norm(self.gamma[-1,:] - goalposition)**2 * 10
         # weight each cost element
-        return smoothcost + goalcost + verticalcost + tiltcost
+        return smoothcost + goalcost + verticalcost + 2*tiltcost + 0.1 * heightcost
 
     """ use scipy optimizer to get optimal trajectory """
     def optimize(self, method='SLSQP'):
