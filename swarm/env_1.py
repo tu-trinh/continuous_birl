@@ -5,14 +5,15 @@ import pybullet as p
 import pybullet_data
 from car import Racecar
 from objects import YCBObject, InteractiveObj, RBOObject
-
+import sys
 
 class SimpleEnv():
 
-    def __init__(self, n_cars = 1):
+    def __init__(self, n_cars = 1, theta = "regular"):
         # create simulation (GUI)
         self.urdfRootPath = pybullet_data.getDataPath()
         p.connect(p.GUI)
+        # p.connect(p.DIRECT)
         p.setGravity(0, 0, -9.81)
 
         # set up camera
@@ -34,8 +35,19 @@ class SimpleEnv():
         
         # Some constraints
         self.dt = 0.5
-        self.goal_cost_gain = 1
-        self.obstacle_cost_gain = 1
+
+        self.goal_cost_gain = 0
+        self.obstacle_cost_gain = 0
+        
+        if theta == "regular":
+            self.goal_cost_gain = 1
+            self.obstacle_cost_gain = 1
+        elif theta == "goal":
+            self.goal_cost_gain = 0.0001
+            self.obstacle_cost_gain = 0
+        elif theta == "obstacle":
+            self.goal_cost_gain = 0.0001
+            self.obstacle_cost_gain = 1
 
     def close(self):
         p.disconnect()
@@ -43,9 +55,9 @@ class SimpleEnv():
     def step(self, actions):
 
         # get current state
-        state = []
-        for car in self.cars:
-            state.append(self.cars[0].state)
+        # state = []
+        # for car in self.cars:
+        #     state.append(self.cars[0].state)
 
         for i, action in enumerate(actions):
             self.cars[i].step(speed=action[0], angle=action[1])
@@ -55,11 +67,18 @@ class SimpleEnv():
 
         next_state = []
         done = True
+        goal_status = []
+        obs_dists = []
         for car in self.cars:
-            next_state = [car.state]
-            done = done and self.goal_reached(car)
+            state = car.state
+            pos = state['position']
+            next_state.append([pos])
+            goal_state = self.goal_reached(car)
+            goal_status.append(goal_state)
+            done = done and goal_state
         reward = 0.0
-        info = {}
+        info = {'state':next_state}
+
         return next_state, reward, done, info
 
     def get_cars(self):
@@ -87,6 +106,16 @@ class SimpleEnv():
                     idx = i
                     min_dist = distance_cube
         return idx, min_dist
+
+    def get_min_dists(self):
+        min_dists = []
+        for car in self.cars:
+            carId = car.get_car_id()
+            car_pos_orient = p.getBasePositionAndOrientation(carId)
+            car_pos = car_pos_orient[0]
+            _,closest_dist = self.get_obs_dist(car_pos, carId)
+            min_dists.append(closest_dist)
+        return min_dists
 
     def get_closest_car(self):
         min_dist = float("inf")
@@ -160,7 +189,7 @@ class SimpleEnv():
         goal_y = self.goal[1]
         h = 0.1
         car_spawn_radius = np.random.uniform(1.5, 2.5)
-        cube_spawn_dist = 2.0
+        cube_spawn_dist = 2.25
 
         # Obstacle generation
         min_angle = 0
@@ -226,8 +255,8 @@ class SimpleEnv():
         # for boundary in new_car_boundaries:
         transformed_boundary = self._transform_coords(car_yaw, new_car_pos, car_pos)
         _, min_obs_dist = self.get_obs_dist(transformed_boundary, carId)
-        if min_obs_dist < 1.1:
-            obs_cost = float("inf")
+        if min_obs_dist < 1.2:
+            obs_cost = 1000
             return obs_cost
         else:
             obs_cost = min_obs_dist
