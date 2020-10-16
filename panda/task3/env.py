@@ -22,9 +22,9 @@ class Task():
         p.loadURDF(os.path.join(self.urdfRootPath, "table/table.urdf"), basePosition=[0.5, 0, -0.65])
 
         # target
-        obj2 = YCBObject('002_master_chef_can')
-        obj2.load()
-        p.resetBasePositionAndOrientation(obj2.body_id, [0.7, -0.35, 0.01], [0, 0, 0, 1])
+        # obj2 = YCBObject('025_mug')
+        # obj2.load()
+        # p.resetBasePositionAndOrientation(obj2.body_id, [0.7, -0.35, 0.01], [0, 0, 0, 0.75])
 
         # load a panda robot
         self.panda = Panda()
@@ -66,7 +66,7 @@ class Task():
     def _set_camera(self):
         self.camera_width = 256
         self.camera_height = 256
-        p.resetDebugVisualizerCamera(cameraDistance=1.2, cameraYaw=30, cameraPitch=-80,
+        p.resetDebugVisualizerCamera(cameraDistance=0.8, cameraYaw=20, cameraPitch=-40,
                                      cameraTargetPosition=[0.5, -0.2, 0.0])
         self.view_matrix = p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0.5, 0, 0],
                                                                distance=1.0,
