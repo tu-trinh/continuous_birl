@@ -52,11 +52,11 @@ def get_optimals(episodes, theta):
     return dataset
 
 def main():
-    episodes = 25
+    episodes = 10
     optimals = {'regular': [], 'goal': [], 'obstacle': []}
-    optimals['regular'] = get_optimals(25, theta="regular")
-    optimals['goal'] = get_optimals(25, theta="goal")
-    optimals['obstacle'] = get_optimals(25, theta="obstacle")
+    optimals['regular'] = get_optimals(episodes, theta="regular")
+    optimals['goal'] = get_optimals(episodes, theta="goal")
+    optimals['obstacle'] = get_optimals(episodes, theta="obstacle")
     pickle.dump( optimals, open( "choices/optimal.pkl", "wb" ) )
 
 if __name__ == "__main__":
