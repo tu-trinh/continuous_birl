@@ -79,16 +79,16 @@ def get_human(episodes, t_delay, type):
     return dataset
 
 def main():
-    episodes = 10
+    episodes = 5
     t_delay = 4
     demos = get_human(episodes, t_delay, type="regular")
     pickle.dump( demos, open( "choices/demos.pkl", "wb" ) )
     print(demos)
     print("Demos complete")
-    noisies = get_human(25, t_delay=t_delay, type="noise")
+    noisies = get_human(10, t_delay=t_delay, type="noise")
     pickle.dump( noisies, open( "choices/noisy.pkl", "wb" ) )
     print("noisies complete")
-    counterfactuals = get_human(25, t_delay=t_delay, type="counterfactual")
+    counterfactuals = get_human(10, t_delay=t_delay, type="counterfactual")
     pickle.dump( counterfactuals, open( "choices/counterfactual.pkl", "wb" ) )
     print("counterfactual complete")
 
