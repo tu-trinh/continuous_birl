@@ -120,28 +120,29 @@ def main():
     O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
 
     """ our approach, with counterfactuals """
-    # Xi_R = D + E
-    # for beta in [0.001, 0.002, 0.005]:
-    #     b = get_belief(beta, D, Xi_R)
-    #     plt.bar(range(3), b)
-    #     plt.show()
+    Xi_R = D + E
+    for beta in [0.001, 0.002, 0.005]:
+        b = get_belief(beta, D, Xi_R)
+        plt.bar(range(3), b)
+        plt.show()
 
-    # """ UT approach, with noise """
-    # Xi_R = D + N
-    # for beta in [0.001, 0.002, 0.005]:
-    #     b = get_belief(beta, D, Xi_R)
-    #     plt.bar(range(3), b)
-    #     plt.show()
+    """ UT approach, with noise """
+    Xi_R = D + N
+    for beta in [0.001, 0.002, 0.005]:
+        b = get_belief(beta, D, Xi_R)
+        plt.bar(range(3), b)
+        plt.show()
 
-    # """ classic approach, with matching feature counts """
-    # for beta in [0.001, 0.002, 0.005]:
-    #     b = birl_belief(beta, D, O)
-    #     plt.bar(range(3), b)
-    #     plt.show()
+    """ classic approach, with matching feature counts """
+    for beta in [0.001, 0.002, 0.005]:
+        b = birl_belief(beta, D, O)
+        plt.bar(range(3), b)
+        plt.show()
+
     entropy_counter = []
     entropy_noise = []
     entropy_classic = []
-    BETA = [0.001, 0.002, 0.005, 0.007, 0.01]
+    BETA = [0.0, 0.001, 0.002, 0.005]
     for beta in BETA:
         Xi_R = D + E
         b = get_belief(beta, D, Xi_R)

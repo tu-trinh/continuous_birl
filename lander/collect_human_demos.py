@@ -14,16 +14,16 @@ def get_human(episodes, t_delay=8, type="regular"):
     softmax = torch.nn.Softmax(dim=1)
     dataset = []
     if type == "regular":
-        stoptime_lb = 150
+        stoptime_lb = 200
         noise_threshold = 0.0
     elif type == "noise":
-        stoptime_lb = 150
-        noise_threshold = 0.4
+        stoptime_lb = 200
+        noise_threshold = 0.2
     elif type == "counterfactual":
         stoptime_lb = 0
-        noise_threshold = 0.0
+        noise_threshold = 0.2
     for episode in range(episodes):
-        stoptime = np.random.randint(stoptime_lb, 151)
+        stoptime = np.random.randint(stoptime_lb, 201)
         state = env.reset(theta="center")
         xi = []
         action = 0
@@ -58,7 +58,7 @@ def get_human(episodes, t_delay=8, type="regular"):
 
 def main():
 
-    t_delay = 10
+    t_delay = 8
     demos = get_human(25, t_delay=t_delay, type="regular")
     noisies = get_human(100, t_delay=t_delay, type="noise")
     counterfactuals = get_human(100, t_delay=t_delay, type="counterfactual")
