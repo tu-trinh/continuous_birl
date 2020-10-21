@@ -9,6 +9,7 @@ def Reward(xi, theta):
     prev_shaping = None
     reward = 0
     initial_waypoint = xi[0]
+    # print(xi[0])
     initial_state = initial_waypoint[3]
     initial_x = initial_state[0]
     for i, waypoint in enumerate(xi):
@@ -57,6 +58,7 @@ def Reward(xi, theta):
     return R
 
 def get_belief(beta, D, Xi_R):
+
     rewards_D_1 = np.asarray([Reward(xi,"center") for xi in D], dtype = np.float32)
     rewards_XiR_1 = np.asarray([Reward(xi,"center") for xi in Xi_R], dtype = np.float32)
     rewards_D_2 = np.asarray([Reward(xi,"anywhere") for xi in D], dtype = np.float32)
@@ -110,15 +112,21 @@ def birl_belief(beta, D, O):
     b = [p1/Z, p2/Z, p3/Z]
     return b
 
+def get_uncertainty(data):
+    mean = np.mean(data)
+    std = np.std(data)
+    # print(len(data))
+    sem = std/np.sqrt(len(data))
+    return mean, sem
+
 
 def main():
 
     #import trajectories (that could be choices)
     D = pickle.load( open( "choices/demos.pkl", "rb" ) )
-    E = pickle.load( open( "choices/counterfactual.pkl", "rb" ) )
-    N = pickle.load( open( "choices/noisy.pkl", "rb" ) )
+    E_set = pickle.load( open( "choices/counterfactuals_set.pkl", "rb" ) )
+    N_set = pickle.load( open( "choices/noisies_set.pkl", "rb" ) )
     O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
-
     """ our approach, with counterfactuals """
     # Xi_R = D + E
     # for beta in [0.001, 0.002, 0.005]:
@@ -138,25 +146,84 @@ def main():
     #     b = birl_belief(beta, D, O)
     #     plt.bar(range(3), b)
     #     plt.show()
-    entropy_counter = []
-    entropy_noise = []
-    entropy_classic = []
-    BETA = [0.001, 0.002, 0.005, 0.007, 0.01]
+    e_mean_classic = []
+    e_sem_classic = []
+    e_mean_counter = []
+    e_sem_counter = []
+    e_mean_noise = []
+    e_sem_noise = []
+    b_mean_classic = []
+    b_sem_classic = []
+    b_mean_counter = []
+    b_sem_counter = []
+    b_mean_noise = []
+    b_sem_noise = []
+
+    BETA = [0.0, 0.001, 0.002, 0.003, 0.004 ,0.005]
+    # BETA = [0.001, 0.005]
+
     for beta in BETA:
-        Xi_R = D + E
-        b = get_belief(beta, D, Xi_R)
-        entropy_counter.append(entropy(b))
-        Xi_R = D + N
-        b = get_belief(beta, D, Xi_R)
-        entropy_noise.append(entropy(b))
-        b = birl_belief(beta, D, O)
-        entropy_classic.append(entropy(b))
-    # print(entropy_counter)
-    fig, ax = plt.subplots(1,3, figsize=(20,5), sharey=True,)
-    ax[0].bar(range(len(BETA)), entropy_counter)
-    ax[1].bar(range(len(BETA)), entropy_noise)
-    ax[2].bar(range(len(BETA)), entropy_classic)
-    plt.show()
+        entropy_counter = []
+        entropy_noise = []
+        entropy_classic = []
+        belief_counter = []
+        belief_noise = []
+        belief_classic = []
+        for i in range(len(E_set)):
+            E = E_set[i]
+            N = N_set[i]
+
+            Xi_R = D + E
+            b = get_belief(beta, D, Xi_R)
+            belief_counter.append(b[0])
+            entropy_counter.append(entropy(b))
+            
+            Xi_R = D + N
+            b = get_belief(beta, D, Xi_R)
+            belief_noise.append(b[0])
+            entropy_noise.append(entropy(b))
+
+            b = birl_belief(beta, D, O)
+            belief_classic.append(b[0])
+            entropy_classic.append(entropy(b))
+
+        mean, sem = get_uncertainty(entropy_classic)
+        e_mean_classic.append(mean)
+        e_sem_classic.append(sem)
+
+        mean, sem = get_uncertainty(entropy_counter)
+        e_mean_counter.append(mean)
+        e_sem_counter.append(sem)
+
+        mean, sem = get_uncertainty(entropy_noise)
+        e_mean_noise.append(mean)
+        e_sem_noise.append(sem)
+
+        mean, sem = get_uncertainty(belief_classic)
+        b_mean_classic.append(mean)
+        b_sem_classic.append(sem)
+
+        mean, sem = get_uncertainty(belief_counter)
+        b_mean_counter.append(mean)
+        b_sem_counter.append(sem)
+
+        mean, sem = get_uncertainty(belief_noise)
+        b_mean_noise.append(mean)
+        b_sem_noise.append(sem)
+        print("Completed beta: ",beta)
+
+    b_mean = [b_mean_classic, b_mean_noise, b_mean_counter]
+    b_sem = [b_sem_classic, b_sem_noise, b_sem_counter]
+    e_mean = [e_mean_classic, e_mean_noise, e_mean_counter]
+    e_sem = [e_sem_classic, e_sem_noise, e_sem_counter]
+
+    print(b_mean)
+
+    beliefs = {"mean": b_mean, "sem": b_sem}
+    entropies = {"mean": e_mean, "sem": e_sem}
+
+    pickle.dump(beliefs, open( "choices/beliefs.pkl", "wb" ) )
+    pickle.dump(entropies, open( "choices/entropies.pkl", "wb" ) )
 
 if __name__ == "__main__":
     main()
