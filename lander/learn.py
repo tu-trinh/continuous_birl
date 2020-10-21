@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
-
+from scipy.stats import entropy
 # Reward functions
 def Reward(xi, theta):
     R = 0
@@ -120,24 +120,43 @@ def main():
     O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
 
     """ our approach, with counterfactuals """
-    Xi_R = D + E
-    for beta in [0.001, 0.002, 0.005]:
-        b = get_belief(beta, D, Xi_R)
-        plt.bar(range(3), b)
-        plt.show()
+    # Xi_R = D + E
+    # for beta in [0.001, 0.002, 0.005]:
+    #     b = get_belief(beta, D, Xi_R)
+    #     plt.bar(range(3), b)
+    #     plt.show()
 
-    """ UT approach, with noise """
-    Xi_R = D + N
-    for beta in [0.001, 0.002, 0.005]:
-        b = get_belief(beta, D, Xi_R)
-        plt.bar(range(3), b)
-        plt.show()
+    # """ UT approach, with noise """
+    # Xi_R = D + N
+    # for beta in [0.001, 0.002, 0.005]:
+    #     b = get_belief(beta, D, Xi_R)
+    #     plt.bar(range(3), b)
+    #     plt.show()
 
-    """ classic approach, with matching feature counts """
-    for beta in [0.001, 0.002, 0.005]:
+    # """ classic approach, with matching feature counts """
+    # for beta in [0.001, 0.002, 0.005]:
+    #     b = birl_belief(beta, D, O)
+    #     plt.bar(range(3), b)
+    #     plt.show()
+    entropy_counter = []
+    entropy_noise = []
+    entropy_classic = []
+    BETA = [0.001, 0.002, 0.005, 0.007, 0.01]
+    for beta in BETA:
+        Xi_R = D + E
+        b = get_belief(beta, D, Xi_R)
+        entropy_counter.append(entropy(b))
+        Xi_R = D + N
+        b = get_belief(beta, D, Xi_R)
+        entropy_noise.append(entropy(b))
         b = birl_belief(beta, D, O)
-        plt.bar(range(3), b)
-        plt.show()
+        entropy_classic.append(entropy(b))
+    # print(entropy_counter)
+    fig, ax = plt.subplots(1,3, figsize=(20,5), sharey=True,)
+    ax[0].bar(range(len(BETA)), entropy_counter)
+    ax[1].bar(range(len(BETA)), entropy_noise)
+    ax[2].bar(range(len(BETA)), entropy_classic)
+    plt.show()
 
 if __name__ == "__main__":
     main()
