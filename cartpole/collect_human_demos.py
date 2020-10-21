@@ -50,15 +50,21 @@ def get_human(episodes, t_delay=8, type="regular"):
 def main():
 
     # play with the t_delay and number of demonstrations
-
-    t_delay = 10
+    t_delay = 7
     demos = get_human(25, t_delay=t_delay, type="regular")
-    noisies = get_human(100, t_delay=t_delay, type="noise")
-    counterfactuals = get_human(100, t_delay=t_delay, type="counterfactual")
+
+    N = 10
+    noisies_set = []
+    counterfactuals_set = []
+    for i in range(0,N):
+        noisies = get_human(100, t_delay=t_delay, type="noise")
+        counterfactuals = get_human(100, t_delay=t_delay, type="counterfactual")
+        noisies_set.append(noisies)
+        counterfactuals_set.append(counterfactuals)
 
     pickle.dump( demos, open( "choices/demos.pkl", "wb" ) )
-    pickle.dump( noisies, open( "choices/noisy.pkl", "wb" ) )
-    pickle.dump( counterfactuals, open( "choices/counterfactual.pkl", "wb" ) )
+    pickle.dump( noisies_set, open( "choices/noisies_set.pkl", "wb" ) )
+    pickle.dump( counterfactuals_set, open( "choices/counterfactuals_set.pkl", "wb" ) )
 
 
 if __name__ == "__main__":
