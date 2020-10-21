@@ -144,7 +144,7 @@ def main():
     b_mean_noise = []
     b_sem_noise = []
 
-    BETA = range(0,20)
+    BETA = range(0,10)
     BETA = [b * 0.1 for b in BETA]
     # BETA = [0.001, 0.005]
 

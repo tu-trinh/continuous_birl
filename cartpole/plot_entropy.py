@@ -6,7 +6,7 @@ import pickle
 
 def main():
 
-    BETA = range(0,20)
+    BETA = range(0,10)
     BETA = [b * 0.1 for b in BETA]
 
     beliefs = pickle.load( open( "choices/beliefs.pkl", "rb" ) )
@@ -29,9 +29,9 @@ def main():
         fill_top = [a_i + b_i for a_i, b_i in zip(b_mean[i], b_sem[i])]
         ax[0].plot(BETA, b_mean[i], color = colors[i], label=labels[i])
         ax[0].legend()
-        ax[0].fill_between(BETA, fill_bottom, fill_top)
+        # ax[0].fill_between(BETA, fill_bottom, fill_top)
         ax[0].set_xlim(0, BETA[-1])
-        ax[0].set_ylim([0, 1.0])
+        ax[0].set_ylim([0, 0.6])
         ax[0].set_title("Belief wrt Beta")
         ax[0].set_xlabel("Beta")
         ax[0].set_ylabel("Belief")
@@ -40,8 +40,8 @@ def main():
         fill_top = [a_i + b_i for a_i, b_i in zip(e_mean[i], e_sem[i])]
         ax[1].plot(BETA, e_mean[i], color = colors[i], label=labels[i])
         ax[1].legend()
-        ax[1].set_xlim(0, 1.0)
-        ax[1].fill_between(BETA, fill_bottom, fill_top)
+        ax[1].set_xlim(0, BETA[-1])
+        # ax[1].fill_between(BETA, fill_bottom, fill_top)
         # ax[1].set_ylim([0, 1.0])
         ax[1].set_title("Entropy wrt Beta")
         ax[1].set_xlabel("Beta")
