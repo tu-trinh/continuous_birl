@@ -43,27 +43,33 @@ def get_human(theta, lava, vision_radius=0.3, type="regular"):
 
 def main():
 
-    THETAS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    episodes = 20
+    episodes = 10
     theta_star = 1.0
-    demos = []
-    counterfactuals = []
-    noisies = []
 
-    for episode in range(episodes):
-        print(episode * 1.0 / episodes * 100)
-        lava = np.asarray([np.random.random()*0.5 + 0.25, np.random.random()*0.5 + 0.25])
-        xi = get_human(theta_star, lava, type="regular")
-        demos.append((xi, lava))
-        for k in range(10):
-            xi1 = get_human(theta_star, lava, type="noise")
-            noisies.append((xi1, lava))
-        for k in range(10):
-            xi1 = get_human(theta_star, lava, type="counterfactual")
-            counterfactuals.append((xi1, lava))
+    N = 10
+    noisies_set = []
+    counterfactuals_set = []
+    for i in range(0,N):
+        demos = []
+        counterfactuals = []
+        noisies = []
+        for episode in range(episodes):
+            print(episode * 1.0 / episodes * 100)
+            lava = np.asarray([np.random.random()*0.5 + 0.25, np.random.random()*0.5 + 0.25])
+            xi = get_human(theta_star, lava, type="regular")
+            demos.append((xi, lava))
+            for k in range(10):
+                xi1 = get_human(theta_star, lava, type="noise")
+                noisies.append((xi1, lava))
+            for k in range(10):
+                xi1 = get_human(theta_star, lava, type="counterfactual")
+                counterfactuals.append((xi1, lava))
+        noisies_set.append(noisies)
+        counterfactuals_set.append(counterfactuals)
+
     pickle.dump( demos, open( "choices/demos.pkl", "wb" ) )
-    pickle.dump( noisies, open( "choices/noisy.pkl", "wb" ) )
-    pickle.dump( counterfactuals, open( "choices/counterfactual.pkl", "wb" ) )
+    pickle.dump( noisies_set, open( "choices/noisies_set.pkl", "wb" ) )
+    pickle.dump( counterfactuals_set, open( "choices/counterfactuals_set.pkl", "wb" ) )
 
 
 if __name__ == "__main__":
