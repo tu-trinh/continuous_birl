@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pickle    
+import pickle
 
 
 
@@ -21,15 +21,16 @@ def main():
     color_counterfactuals = [255/255, 153./255, 0]
     color_noise = [102./255, 102./255, 102./255]
     color_classic = [179./255, 179./255, 179./255]
-    colors = [color_classic, color_noise, color_counterfactuals]
-    labels = ["classic", "noise", "counterfactuals"]
+    color_gold = [0, 0, 0]
+    colors = [color_classic, color_noise, color_counterfactuals, color_gold]
+    labels = ["classic", "noise", "counterfactuals", "gold"]
 
     for i in range(len(b_mean)):
         fill_bottom = [a_i - b_i for a_i, b_i in zip(b_mean[i], b_sem[i])]
         fill_top = [a_i + b_i for a_i, b_i in zip(b_mean[i], b_sem[i])]
         ax[0].plot(BETA, b_mean[i], color = colors[i], label=labels[i])
         ax[0].legend()
-        ax[0].fill_between(BETA, fill_bottom, fill_top)
+        # ax[0].fill_between(BETA, fill_bottom, fill_top)
         ax[0].set_xlim(0, BETA[-1])
         ax[0].set_ylim([0, 1.0])
         ax[0].set_title("Belief wrt Beta")
@@ -41,7 +42,7 @@ def main():
         ax[1].plot(BETA, e_mean[i], color = colors[i], label=labels[i])
         ax[1].legend()
         ax[1].set_xlim(0, BETA[-1])
-        ax[1].fill_between(BETA, fill_bottom, fill_top)
+        # ax[1].fill_between(BETA, fill_bottom, fill_top)
         # ax[1].set_ylim([0, 1.0])
         ax[1].set_title("Entropy wrt Beta")
         ax[1].set_xlabel("Beta")
