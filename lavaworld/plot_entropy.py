@@ -21,8 +21,9 @@ def main():
     color_counterfactuals = [255/255, 153./255, 0]
     color_noise = [102./255, 102./255, 102./255]
     color_classic = [179./255, 179./255, 179./255]
-    colors = [color_classic, color_noise, color_counterfactuals]
-    labels = ["classic", "noise", "counterfactuals"]
+    color_gold = [0, 0, 0]
+    colors = [color_classic, color_noise, color_counterfactuals, color_gold]
+    labels = ["classic", "noise", "counterfactuals", "gold"]
 
     for i in range(len(b_mean)):
         fill_bottom = [a_i - b_i for a_i, b_i in zip(b_mean[i], b_sem[i])]
