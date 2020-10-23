@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+from scipy.stats import entropy
 
 # Reward functions
 def Reward(xi, theta):
@@ -40,8 +41,8 @@ def get_belief(beta, D, Xi_R):
     n1 = np.exp(beta*sum(rewards_D_1))
     d1 = sum(np.exp(beta*rewards_XiR_1))**len(D)
     p1 = n1/d1
-    print("n1: ",n1)
-    print("p1: ", p1)
+    # print("n1: ",n1)
+    # print("p1: ", p1)
     # Reward for landing anywhere
 
     n2 = np.exp(beta*sum(rewards_D_2))
@@ -92,29 +93,71 @@ def main():
     E = pickle.load( open( "choices/counterfactual.pkl", "rb" ) )
     N = pickle.load( open( "choices/noisy.pkl", "rb" ) )
     O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
+    C = pickle.load( open( "choices/choiceset.pkl", "rb" ) )
+    
+    BETA = range(0,22,3)
+    BETA = [b * 0.01 for b in BETA]
+
+    entropy_counter = []
+    entropy_noise = []
+    entropy_classic = []
+    entropy_gold = []
+    belief_counter = []
+    belief_noise = []
+    belief_classic = []
+    belief_gold = []
+
+    for beta in BETA:
+
+        Xi_R = D + E
+        b = get_belief(beta, D, Xi_R)
+        belief_counter.append(b[0])
+        entropy_counter.append(entropy(b))
+
+        Xi_R = D + N
+        b = get_belief(beta, D, Xi_R)
+        belief_noise.append(b[0])
+        entropy_noise.append(entropy(b))
+
+        b = birl_belief(beta, D, O)
+        belief_classic.append(b[0])
+        entropy_classic.append(entropy(b))
+
+        Xi_R = D + C
+        b = get_belief(beta, D, Xi_R)
+        belief_gold.append(b[0])
+        entropy_gold.append(entropy(b))
+
+        print("Completed beta: ",beta)
 
     """ our approach, with counterfactuals """
-    Xi_R = D + E
-    for beta in [0.07, 0.1, 0.2]:
-        b = get_belief(beta, D, Xi_R)
-        plt.bar(range(3), b)
-        plt.title("Counterfactuals with beta: {}".format(beta) )
-        plt.show()
+    # Xi_R = D + E
+    # for beta in [0.07, 0.1, 0.3]:
+    #     b = get_belief(beta, D, Xi_R)
+    #     plt.bar(range(3), b)
+    #     plt.title("Counterfactuals with beta: {}".format(beta) )
+    #     plt.show()
 
-    # """ UT approach, with noise """
-    Xi_R = D + N
-    for beta in [0.07, 0.1, 0.2]:
-        b = get_belief(beta, D, Xi_R)
-        plt.bar(range(3), b)
-        plt.title("Noisy with beta: {}".format(beta))
-        plt.show()
+    # # """ UT approach, with noise """
+    # Xi_R = D + N
+    # for beta in [0.07, 0.1, 0.2]:
+    #     b = get_belief(beta, D, Xi_R)
+    #     plt.bar(range(3), b)
+    #     plt.title("Noisy with beta: {}".format(beta))
+    #     plt.show()
 
-    """ classic approach, with matching feature counts """
-    for beta in [0.07, 0.1, 0.2]:
-        b = birl_belief(beta, D, O)
-        plt.bar(range(3), b)
-        plt.title("Classic with beta: {}".format(beta))
-        plt.show()
+    # """ classic approach, with matching feature counts """
+    # for beta in [0.07, 0.1, 0.2]:
+    #     b = birl_belief(beta, D, O)
+    #     plt.bar(range(3), b)
+    #     plt.title("Classic with beta: {}".format(beta))
+    #     plt.show()
+    beliefs = [belief_classic, belief_noise, belief_counter, belief_gold]
+    entropies = [entropy_classic, entropy_noise, entropy_counter, entropy_gold]
+
+    print(beliefs)
+    pickle.dump(beliefs, open( "choices/beliefs.pkl", "wb" ) )
+    pickle.dump(entropies, open( "choices/entropies.pkl", "wb" ) )
 
 if __name__ == "__main__":
     main()
