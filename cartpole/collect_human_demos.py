@@ -37,7 +37,7 @@ def get_human(episodes, t_delay=8, type="regular"):
             if np.random.random() < noise_threshold:
                 action = np.random.randint(0,2)
             xi.append([action] + list(state))
-            # env.render()              # can always toggle visualization
+            # img = env.render(mode="rgb_array")              # can always toggle visualization
             next_state, _, done, _ = env.step(action)
             state = next_state
             if done:
