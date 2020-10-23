@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+from scipy.stats import entropy
 
 # Reward functions
 def Reward(xi, theta):
@@ -120,24 +121,35 @@ def main():
     O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
 
     """ our approach, with counterfactuals """
-    Xi_R = D + E
-    for beta in [0.001, 0.002, 0.005]:
-        b = get_belief(beta, D, Xi_R)
-        plt.bar(range(3), b)
-        plt.show()
+    # Xi_R = D + E
+    # for beta in [0.001, 0.002, 0.005]:
+    #     b = get_belief(beta, D, Xi_R)
+    #     plt.bar(range(3), b)
+    #     plt.show()
 
-    """ UT approach, with noise """
-    Xi_R = D + N
-    for beta in [0.001, 0.002, 0.005]:
-        b = get_belief(beta, D, Xi_R)
-        plt.bar(range(3), b)
-        plt.show()
+    # """ UT approach, with noise """
+    # Xi_R = D + N
+    # for beta in [0.001, 0.002, 0.005]:
+    #     b = get_belief(beta, D, Xi_R)
+    #     plt.bar(range(3), b)
+    #     plt.show()
 
-    """ classic approach, with matching feature counts """
-    for beta in [0.001, 0.002, 0.005]:
-        b = birl_belief(beta, D, O)
-        plt.bar(range(3), b)
-        plt.show()
+    # """ classic approach, with matching feature counts """
+    # for beta in [0.001, 0.002, 0.005]:
+    #     b = birl_belief(beta, D, O)
+    #     plt.bar(range(3), b)
+    #     plt.show()
+    b_counter = []
+    b_noise = []
+    b_classic = []
+    BETA = [0.001, 0.002, 0.005]
+    for beta in BETA:
+        Xi_R = D + E
+        b_counter = get_belief(beta, D, Xi_R)
+        Xi_R = D + N
+        b_noise = get_belief(beta, D, Xi_R)
+
+        b_classic = birl_belief(beta, D, O)
 
 if __name__ == "__main__":
     main()
