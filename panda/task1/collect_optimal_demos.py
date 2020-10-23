@@ -56,6 +56,7 @@ class TrajOpt(object):
         self.gamma_mid = np.zeros((self.n_waypoints, 3))
         self.gamma_almost = np.zeros((self.n_waypoints, 3))
         self.gamma_end = np.zeros((self.n_waypoints, 3))
+        self.alignx = np.zeros((self.n_waypoints, 3))
 
     """ forward kinematics of panda robot arm """
     def joint2pose(self, q):
@@ -78,17 +79,18 @@ class TrajOpt(object):
         H_mid = np.linalg.multi_dot([H1, H2, H3, H4])
         H_almost = np.linalg.multi_dot([H_mid, H5, H6])
         H_end = np.linalg.multi_dot([H_almost, H7, H_panda_hand])
-        return H_mid[:,3][:3], H_almost[:,3][:3], H_end[:,3][:3]
+        return H_mid[:,3][:3], H_almost[:,3][:3], H_end[:,3][:3], H_end[:,0][:3]
 
     """ problem specific cost function """
     def trajcost(self, xi):
         # get trajectory in joint space and end-effector space
         xi = xi.reshape(self.n_waypoints,self.n_joints)
         for idx in range(self.n_waypoints):
-            p_midway, p_almost, p_end = self.joint2pose(xi[idx,:])
+            p_midway, p_almost, p_end, align_x = self.joint2pose(xi[idx,:])
             self.gamma_mid[idx,:] = p_midway
             self.gamma_almost[idx,:] = p_almost
             self.gamma_end[idx,:] = p_end
+            self.alignx[idx,:] = align_x
         # make trajectory smooth (in joint space)
         smoothcost_xi = 0
         for idx in range(1, self.n_waypoints):
@@ -108,10 +110,12 @@ class TrajOpt(object):
         # make trajectory stay close to ground
         heightcost = 0
         for idx in range(1, self.n_waypoints):
-            heightcost += self.gamma_end[idx,2]**2
+            heightcost += (0.1 - self.gamma_end[idx,2])**2
+        # make robot end in grasping pose
+        graspcost = self.alignx[-1,0]**2
         # weight each cost element
         return 0.2*smoothcost_xi + self.theta[0]*goalcost + \
-            self.theta[1]*heightcost + self.theta[2]*obscost * 4
+            self.theta[1]*heightcost + self.theta[2]*obscost * 4 + graspcost
 
     """ use scipy optimizer to get optimal trajectory """
     def optimize(self, method='SLSQP'):

@@ -96,8 +96,8 @@ class TrajOpt(object):
         for idx in range(1, self.n_waypoints):
             verticalcost += abs(1 - abs(self.alignz[idx,2]))**2
         # make trajectory pick up pen
-        objposition = np.array([0.3, -0.3, 0.1])
-        objcost = np.linalg.norm(self.gamma[4,:] - objposition)**2 * 10
+        objposition = np.array([0.4, -0.3, 0.1])
+        objcost = np.linalg.norm(self.gamma[4,:] - objposition) * 100
         # make trajectory drop the pen
         dropposition = np.array([0.50, 0.2, 0.1])
         dropcost = np.linalg.norm(self.gamma[-1,:] - dropposition)**2 * 10
@@ -105,16 +105,15 @@ class TrajOpt(object):
         heightcost = 0
         for idx in range(7,self.n_waypoints - 1):
             heightcost += (0.5 - self.gamma[idx,2])
-        goalposition = np.array([0.55, 0.3, 0.25])
+        goalposition = np.array([0.55, 0.3, 0.31])
         goalcost = np.linalg.norm(self.gamma[-1,:] - goalposition)**2 * 10
-        goalcost += 0.1 * heightcost
         # chose which reward to optimize for
         if self.theta:
-            taskcost = goalcost
+            taskcost = goalcost + 0.2 * heightcost
         else:
-            taskcost = dropcost
+            taskcost = dropcost + 0.1 * heightcost
         # weight each cost element
-        return smoothcost + objcost + 10 * verticalcost + taskcost
+        return smoothcost + objcost + 100 * verticalcost + taskcost
 
     """ use scipy optimizer to get optimal trajectory """
     def optimize(self, method='SLSQP'):

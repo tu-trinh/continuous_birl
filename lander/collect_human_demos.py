@@ -14,16 +14,16 @@ def get_human(episodes, t_delay=8, type="regular"):
     softmax = torch.nn.Softmax(dim=1)
     dataset = []
     if type == "regular":
-        stoptime_lb = 150
-        noise_threshold = 0.0
+        stoptime_lb = 200
+        noise_threshold = 0.1
     elif type == "noise":
-        stoptime_lb = 150
-        noise_threshold = 0.4
+        stoptime_lb = 200
+        noise_threshold = 0.2
     elif type == "counterfactual":
         stoptime_lb = 0
-        noise_threshold = 0.0
+        noise_threshold = 0.2
     for episode in range(episodes):
-        stoptime = np.random.randint(stoptime_lb, 151)
+        stoptime = np.random.randint(stoptime_lb, 201)
         state = env.reset(theta="center")
         xi = []
         action = 0
@@ -58,14 +58,21 @@ def get_human(episodes, t_delay=8, type="regular"):
 
 def main():
 
-    t_delay = 10
+    t_delay = 5
     demos = get_human(25, t_delay=t_delay, type="regular")
-    noisies = get_human(100, t_delay=t_delay, type="noise")
-    counterfactuals = get_human(100, t_delay=t_delay, type="counterfactual")
+
+    N = 1
+    noisies_set = []
+    counterfactuals_set = []
+    for i in range(0,N):
+        noisies = get_human(100, t_delay=t_delay, type="noise")
+        counterfactuals = get_human(100, t_delay=t_delay, type="counterfactual")
+        noisies_set.append(noisies)
+        counterfactuals_set.append(counterfactuals)
 
     pickle.dump( demos, open( "choices/demos.pkl", "wb" ) )
-    pickle.dump( noisies, open( "choices/noisy.pkl", "wb" ) )
-    pickle.dump( counterfactuals, open( "choices/counterfactual.pkl", "wb" ) )
+    pickle.dump( noisies_set, open( "choices/noisies_set.pkl", "wb" ) )
+    pickle.dump( counterfactuals_set, open( "choices/counterfactuals_set.pkl", "wb" ) )
 
 
 if __name__ == "__main__":

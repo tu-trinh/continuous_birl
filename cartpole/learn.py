@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
-
+from scipy.stats import entropy
 
 #reward function for keeping pole vertical
 def Rup(xi):
@@ -95,35 +95,142 @@ def birl_belief(beta, D, O):
     b = [p1/Z, p2/Z, p3/Z, p4/Z]
     return b
 
+def get_uncertainty(data):
+    mean = np.mean(data)
+    std = np.std(data)
+    # print(len(data))
+    sem = std/np.sqrt(len(data))
+    return mean, sem
 
 def main():
 
     #import trajectories (that could be choices)
     D = pickle.load( open( "choices/demos.pkl", "rb" ) )
-    E = pickle.load( open( "choices/counterfactual.pkl", "rb" ) )
-    N = pickle.load( open( "choices/noisy.pkl", "rb" ) )
+    E_set = pickle.load( open( "choices/counterfactuals_set.pkl", "rb" ) )
+    N_set = pickle.load( open( "choices/noisies_set.pkl", "rb" ) )
     O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
+    C = pickle.load( open( "choices/choiceset.pkl", "rb" ) )
+    # E = E_set[5]
+    # N = N_set[5]
+    # """ our approach, with counterfactuals """
+    # Xi_R = D + E
+    # for beta in [0.01, 0.1, 0.5]:
+    #     b = get_belief(beta, D, Xi_R)
+    #     plt.bar(range(4), b)
+    #     plt.show()
 
-    """ our approach, with counterfactuals """
-    Xi_R = D + E
-    for beta in [0.01, 0.1, 0.5]:
-        b = get_belief(beta, D, Xi_R)
-        plt.bar(range(4), b)
-        plt.show()
+    # """ UT approach, with noise """
+    # Xi_R = D + N
+    # for beta in [0.01, 0.1, 0.5]:
+    #     b = get_belief(beta, D, Xi_R)
+    #     plt.bar(range(4), b)
+    #     plt.show()
 
-    """ UT approach, with noise """
-    Xi_R = D + N
-    for beta in [0.01, 0.1, 0.5]:
-        b = get_belief(beta, D, Xi_R)
-        plt.bar(range(4), b)
-        plt.show()
+    # """ classic approach, with matching feature counts """
+    # for beta in [0.01, 0.1, 0.5]:
+    #     b = birl_belief(beta, D, O)
+    #     plt.bar(range(4), b)
+    #     plt.show()
 
-    """ classic approach, with matching feature counts """
-    for beta in [0.01, 0.1, 0.5]:
-        b = birl_belief(beta, D, O)
-        plt.bar(range(4), b)
-        plt.show()
+    e_mean_classic = []
+    e_sem_classic = []
+    e_mean_counter = []
+    e_sem_counter = []
+    e_mean_noise = []
+    e_sem_noise = []
+    e_mean_gold = []
+    e_sem_gold = []
+    b_mean_classic = []
+    b_sem_classic = []
+    b_mean_counter = []
+    b_sem_counter = []
+    b_mean_noise = []
+    b_sem_noise = []
+    b_mean_gold = []
+    b_sem_gold = []
 
+    BETA = range(0,10)
+    BETA = [b * 0.1 for b in BETA]
+    # BETA = [0.001, 0.005]
+
+    for beta in BETA:
+        entropy_counter = []
+        entropy_noise = []
+        entropy_classic = []
+        entropy_gold = []
+        belief_counter = []
+        belief_noise = []
+        belief_classic = []
+        belief_gold = []
+        for i in range(len(E_set)):
+            E = E_set[i]
+            N = N_set[i]
+
+            Xi_R = D + E
+            b = get_belief(beta, D, Xi_R)
+            belief_counter.append(b[0])
+            entropy_counter.append(entropy(b))
+
+            Xi_R = D + N
+            b = get_belief(beta, D, Xi_R)
+            belief_noise.append(b[0])
+            entropy_noise.append(entropy(b))
+
+            b = birl_belief(beta, D, O)
+            belief_classic.append(b[0])
+            entropy_classic.append(entropy(b))
+
+            Xi_R = D + C
+            b = get_belief(beta, D, Xi_R)
+            belief_gold.append(b[0])
+            entropy_gold.append(entropy(b))
+
+        mean, sem = get_uncertainty(entropy_classic)
+        e_mean_classic.append(mean)
+        e_sem_classic.append(sem)
+
+        mean, sem = get_uncertainty(entropy_counter)
+        e_mean_counter.append(mean)
+        e_sem_counter.append(sem)
+
+        mean, sem = get_uncertainty(entropy_noise)
+        e_mean_noise.append(mean)
+        e_sem_noise.append(sem)
+
+        mean, sem = get_uncertainty(entropy_gold)
+        e_mean_gold.append(mean)
+        e_sem_gold.append(sem)
+
+        mean, sem = get_uncertainty(belief_classic)
+        b_mean_classic.append(mean)
+        b_sem_classic.append(sem)
+
+        mean, sem = get_uncertainty(belief_counter)
+        b_mean_counter.append(mean)
+        b_sem_counter.append(sem)
+
+        mean, sem = get_uncertainty(belief_noise)
+        b_mean_noise.append(mean)
+        b_sem_noise.append(sem)
+
+        mean, sem = get_uncertainty(belief_gold)
+        b_mean_gold.append(mean)
+        b_sem_gold.append(sem)
+
+        print("Completed beta: ",beta)
+
+    b_mean = [b_mean_classic, b_mean_noise, b_mean_counter, b_mean_gold]
+    b_sem = [b_sem_classic, b_sem_noise, b_sem_counter, b_sem_gold]
+    e_mean = [e_mean_classic, e_mean_noise, e_mean_counter, e_mean_gold]
+    e_sem = [e_sem_classic, e_sem_noise, e_sem_counter, e_sem_gold]
+
+    print(b_mean)
+
+    beliefs = {"mean": b_mean, "sem": b_sem}
+    entropies = {"mean": e_mean, "sem": e_sem}
+
+    pickle.dump(beliefs, open( "choices/beliefs.pkl", "wb" ) )
+    pickle.dump(entropies, open( "choices/entropies.pkl", "wb" ) )
 
 if __name__ == "__main__":
     main()

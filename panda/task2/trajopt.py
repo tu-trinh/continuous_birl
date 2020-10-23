@@ -97,7 +97,7 @@ class TrajOpt(object):
             verticalcost += abs(1 - abs(self.alignz[idx,2]))**2
         # make trajectory pick up pen
         objposition = np.array([0.3, -0.3, 0.1])
-        objcost = np.linalg.norm(self.gamma[4,:] - objposition)**2 * 10
+        objcost = np.linalg.norm(self.gamma[4,:] - objposition) * 100
         # make trajectory drop the pen
         dropposition = np.array([0.50, 0.2, 0.1])
         dropcost = np.linalg.norm(self.gamma[-1,:] - dropposition)**2 * 10
@@ -107,12 +107,11 @@ class TrajOpt(object):
             heightcost += (0.5 - self.gamma[idx,2])
         goalposition = np.array([0.55, 0.3, 0.25])
         goalcost = np.linalg.norm(self.gamma[-1,:] - goalposition)**2 * 10
-        goalcost += 0.1 * heightcost
         # chose which reward to optimize for
         if self.theta:
-            taskcost = goalcost
+            taskcost = goalcost + 0.1 * heightcost
         else:
-            taskcost = dropcost
+            taskcost = dropcost + 0.01 * heightcost
         # weight each cost element
         return smoothcost + objcost + 10 * verticalcost + taskcost
 

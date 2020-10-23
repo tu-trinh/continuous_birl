@@ -59,7 +59,7 @@ def trajcost(xi, theta):
     # make trajectory stay close to ground
     heightcost = 0
     for idx in range(1, n_waypoints):
-        heightcost += gamma_end[idx,2]**2
+        heightcost += (0.1 - gamma_end[idx,2])**2
     # weight each cost element
     return 0.2*smoothcost_xi + theta[0]*goalcost + \
         theta[1]*heightcost + theta[2]*obscost * 4.0
