@@ -1,0 +1,48 @@
+instructions for running the choice-sets user study
+
+open three terminals
+- 1. cd panda-ws/choice-sets/
+- 2. cd libfranka/build/
+- 3. cd libfranka/build/
+
+THE WORKFLOW IS THE SAME FOR ALL SCRIPTS:
+- [set robot to home position] in either terminal 2 or 3, run ./collab/return_home
+- [run high level script] in terminal 1, run the script you want (teleop, learn, play)
+- [turn on low-level arm controller] in terminal 2, run ./collab/velocity_control
+- [turn on low-level gripper controller] in terminal 3, run ./collab/grasp_control
+THESE MUST BE ENTERED IN THIS ORDER!
+
+for resetting to home:
+THE HOME POSITION IS DIFFERENT FOR DIFFERENT TASKS!
+for task1: ./collab/return_home
+for task2: ./collab/return_home
+for task3 (demos): ./collab/return_home 0.794095 0.684053 0.122566 -1.38936 -1.46769 1.33218 -0.260643
+for task3 (playback): ./collab/return_home 0.841334 1.16946 0.138284 -1.15176 -1.4545 1.33055 -0.00023852
+
+THE ROBOT MUST BE IN THE CORRECT HOME POSITION FOR THE TASK TO RUN.
+run these commands in either terminal 2 or 3.
+
+for running teleop_taskX.py:
+THERE ARE TWO INPUT ARGUMENTS.
+1. the first argument is the participant number (0 - 10)
+2. the second argument is the demonstration number (0 - 5)
+IF YOU GET THIS WRONG:
+The script will not over-write what's already recorded until the user presses start twice.
+You can kill and restart with the correct arguments before this.
+
+for running learn_taskX.py:
+THERE IS ONE INPUT ARGUMENT.
+1. the only argument is the participant number (0 - 10)
+THE OUTPUTS ARE DIFFERENT PLOTS.
+the plots are titled so you can find what is most relevant.
+on the terminal, it also prints the belief for each method.
+
+for running play_taskX.py:
+THERE IS ONE INPUT ARGUMENT.
+1. the only argument is the reward function to optimize.
+THE NUMBER OF OPTIONS VARIES FOR THE TASK.
+for task1: 1 - 4
+for task2: 1 - 2
+for task3: 1 - 2
+these numbers correspond to what's shown in the plots of belief.
+REMEMBER TO RESET THE ROBOT TO HOME BEFORE RUNNING!
