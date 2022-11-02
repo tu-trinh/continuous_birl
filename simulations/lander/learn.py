@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import pickle
 from scipy.stats import entropy
 
@@ -10,7 +9,6 @@ def Reward(xi, theta):
     prev_shaping = None
     reward = 0
     initial_waypoint = xi[0]
-    # print(xi[0])
     initial_state = initial_waypoint[3]
     initial_x = initial_state[0]
     for i, waypoint in enumerate(xi):
@@ -59,7 +57,6 @@ def Reward(xi, theta):
     return R
 
 def get_belief(beta, D, Xi_R):
-
     rewards_D_1 = np.asarray([Reward(xi,"center") for xi in D], dtype = np.float32)
     rewards_XiR_1 = np.asarray([Reward(xi,"center") for xi in Xi_R], dtype = np.float32)
     rewards_D_2 = np.asarray([Reward(xi,"anywhere") for xi in D], dtype = np.float32)
@@ -122,7 +119,6 @@ def get_uncertainty(data):
 
 
 def main():
-
     #import trajectories (that could be choices)
     D = pickle.load( open( "choices/demos.pkl", "rb" ) )
     E_set = pickle.load( open( "choices/counterfactuals_set.pkl", "rb" ) )
@@ -130,41 +126,6 @@ def main():
     O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
     C = pickle.load( open( "choices/choiceset.pkl", "rb" ) )
    
-    # """ our approach, with counterfactuals """
-    # E = E_set[5]
-    # N = N_set[5]
-    # Xi_R = D + E
-    # for beta in [0.001, 0.002, 0.005]:
-    #     b = get_belief(beta, D, Xi_R)
-    #     plt.bar(range(3), b)
-    #     plt.show()
-
-    # """ UT approach, with noise """
-    # Xi_R = D + N
-    # for beta in [0.001, 0.002, 0.005]:
-    #     b = get_belief(beta, D, Xi_R)
-    #     plt.bar(range(3), b)
-    #     plt.show()
-
-    # """ classic approach, with matching feature counts """
-    # for beta in [0.001, 0.002, 0.005]:
-    #     b = birl_belief(beta, D, O)
-    #     plt.bar(range(3), b)
-    #     plt.show()
-
-    # b_counter = []
-    # b_noise = []
-    # b_classic = []
-    # BETA = [0.001, 0.002, 0.005]
-    # for beta in BETA:
-    #     Xi_R = D + E
-    #     b_counter = get_belief(beta, D, Xi_R)
-    #     Xi_R = D + N
-    #     b_noise = get_belief(beta, D, Xi_R)
-
-    #     b_classic = birl_belief(beta, D, O)
-
-
     e_mean_classic = []
     e_sem_classic = []
     e_mean_counter = []
@@ -184,7 +145,6 @@ def main():
 
     BETA = range(0,5)
     BETA = [b * 0.001 for b in BETA]
-    # BETA = [0.001, 0.005]
 
     for beta in BETA:
         entropy_counter = []

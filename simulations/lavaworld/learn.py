@@ -56,37 +56,6 @@ def get_uncertainty(data):
 
 
 def main():
-
-    # #import trajectories (that could be choices)
-    # D = pickle.load( open( "choices/demos.pkl", "rb" ) )
-    # E = pickle.load( open( "choices/counterfactuals_set.pkl", "rb" ) )
-    # N = pickle.load( open( "choices/noisies_set.pkl", "rb" ) )
-    # O = pickle.load( open( "choices/optimal.pkl", "rb" ) )
-    #
-    # """ our approach, with counterfactuals """
-    # Xi_R = D + E[0]
-    # for beta in [0, 0.1, 1, 2]:
-    #     b = get_belief(beta, D, Xi_R)
-    #     print(entropy(b))
-    #     plt.bar(range(len(b)), b)
-    #     plt.show()
-    #
-    # """ UT approach, with noise """
-    # Xi_R = D + N[0]
-    # for beta in [0, 0.1, 1, 2]:
-    #     b = get_belief(beta, D, Xi_R)
-    #     plt.bar(range(len(b)), b)
-    #     print(entropy(b))
-    #     plt.show()
-    #
-    # """ classic approach, with matching feature counts """
-    # for beta in [0, 0.1, 1, 2]:
-    #     b = birl_belief(beta, D, O)
-    #     plt.bar(range(len(b)), b)
-    #     print(entropy(b))
-    #     plt.show()
-
-
     D = pickle.load( open( "choices/demos.pkl", "rb" ) )
     E_set = pickle.load( open( "choices/counterfactuals_set.pkl", "rb" ) )
     N_set = pickle.load( open( "choices/noisies_set.pkl", "rb" ) )
