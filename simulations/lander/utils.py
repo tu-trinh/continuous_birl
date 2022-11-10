@@ -1,4 +1,4 @@
-import gym
+# import gym
 import numpy as np
 import pickle
 
@@ -10,6 +10,15 @@ possible_rewards = ["center", "anywhere", "crash"]
 # Each episode, aka policy, is an array inside here.
 # Each episode consist of arrays of the form [timestep, action, awake, state] (state itself is also an array).
 
+class Lander:
+    def __init__(self, tt, fw):
+        self.true_theta = tt
+        self.feature_weights = fw
+
+    def set_rewards(self, _feature_weights):
+        self.feature_weights = _feature_weights
+
+
 def reward(policy, theta):
     R = 0
     shaping = 0
@@ -19,53 +28,61 @@ def reward(policy, theta):
     initial_state = initial_waypoint[3]
     initial_x = initial_state[0]
     for i, waypoint in enumerate(policy):
-        state = waypoint[3]
         action = waypoint[1]
+        awake = waypoint[2]
+        state = waypoint[3]
+        features = np.array([
+            state[0],
+            state[1],
+            np.sqrt(state[0]**2 + state[1]**2),
+            state[2],
+            state[3],
+            np.sqrt(state[2]**2 + state[3]**2),
+            state[4],
+            np.abs(state[4]),
+            state[5],
+            state[6],
+            state[7],
+            1,
+            1
+        ])
+        awake_multiplier = 0
+        not_awake_multiplier = 0
+        if i == len(waypoint) and awake:
+            if np.linalg.norm(state[0]) < 0.1 and theta == "center":
+                awake_multiplier = 100
+            elif np.linalg.norm(state[0] - initial_x) < 0.1 and theta == "anywhere":
+                awake_multiplier = 100
+            else:
+                awake_multiplier = -100
+        elif not awake:
+            if theta == "crash":
+                not_awake_multiplier = 100
+            else:
+                not_awake_multiplier = -100
         if theta == "center":
-            shaping = \
-                - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
-                - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-                - 100*abs(state[4]) + 10*state[6] + 10*state[7]
+            theta_vec = np.array([0, 0, -100, 0, 0, -100, 0, -100, 0, 10, 10, awake_multiplier, not_awake_multiplier])
         elif theta == "anywhere":
-            shaping = \
-                - 100*np.sqrt(state[1]*state[1]) \
-                - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-                - 100*abs(state[4]) + 10*state[6] + 10*state[7]
+            theta_vec = np.array([0, -100, 0, 0, 0, -100, 0, -100, 0, 10, 10, awake_multiplier, not_awake_multiplier])
         elif theta == "crash":
-            shaping = \
-                - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
-                - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-                - 0.0*abs(state[4]) + 0.0*state[6] + 0.0*state[7]
-
+            theta_vec = np.array([0, 0, -100, 0, 0, -100, 0, 0, 0, 0, 0, awake_multiplier, not_awake_multiplier])
+        
+        shaping = np.dot(theta_vec, features)
         if prev_shaping is not None:
             reward = shaping - prev_shaping
         prev_shaping = shaping
-
         if action == 1 or 3:
             reward -= 0.03
-
         elif action == 2:
             reward -= 0.30
-
-        awake = waypoint[2]
-        if i == len(waypoint) and awake:
-            if np.linalg.norm(state[0]) < 0.1 and theta == "center":
-                reward = +100
-            if np.linalg.norm(state[0] - initial_x) < 0.1 and theta == "anywhere":
-                reward = +100
-            else:
-                reward = -100
-        elif not awake:
-            if theta == "crash":
-                reward = +100
-            else:
-                reward = -100
         R += reward
     return R / 100
     
 
-def random_lander():
-    env = gym.make('LunarLanderTheta-v0')
+def random_lander(true_theta):
+    if true_theta == "center":
+        feature_weights = np.array([0, 0, -100, 0, 0, -100, 0, -100, 0, 10, 10])
+    env = Lander(true_theta, feature_weights)
     return env
 
 def get_optimal_policy(theta):
@@ -79,8 +96,8 @@ def generate_random_policies():
         random_policies.append(policy)
 
 def generate_optimal_demos(num_demos):
-    # demos = pickle.load(open("choices/demos.pkl", "rb"))
-    demos = pickle.load(open("choices/optimal.pkl", "rb"))["center"]
+    demos = pickle.load(open("choices/demos.pkl", "rb"))
+    # demos = pickle.load(open("choices/optimal.pkl", "rb"))["center"]
     return demos[:num_demos]
 
 def calculate_expected_value_difference(eval_policy, opt_policy, theta, rn = False):
