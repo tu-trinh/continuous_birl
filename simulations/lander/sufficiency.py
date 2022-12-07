@@ -3,6 +3,7 @@ import utils
 import numpy as np
 
 if __name__ == "__main__":
+    print(utils.generate_optimal_demos(1))
     rseed = 168
     random.seed(rseed)
     np.random.seed(rseed)
