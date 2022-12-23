@@ -533,7 +533,7 @@ if __name__ == "__main__":
         confusion_matrices = {threshold: [[0, 0], [0, 0]] for threshold in thresholds} # predicted by true
 
         for i in range(num_worlds):
-            # print("@@@ Evaluation world {} @@@".format(i))
+            print("DOING WORLD", i + 1)
             env = envs[i]
             baseline_pi = mdp_utils.get_nonpessimal_policy(env)
             baseline_evd = mdp_utils.calculate_expected_value_difference(baseline_pi, env, {}, rn = random_normalization)

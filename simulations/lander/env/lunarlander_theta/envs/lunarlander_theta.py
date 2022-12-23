@@ -73,6 +73,7 @@ SIDE_ENGINE_AWAY = 12.0
 VIEWPORT_W = 600
 VIEWPORT_H = 400
 
+HYPOTHESES = {'center': [0, 0, -100, 0, 0, -100, 0, -100, 0, 10, 10], 'anywhere': [0, -100, 0, 0, 0, -100, 0, -100, 0, 10, 10], 'crash': [0, 0, -100, 0, 0, -100, 0, 0, 0, 0, 0], 'hypo0': [0, 0, -101, 0, 0, -104, 0, 0, 0, 0, 0], 'hypo1': [0, 0, -135, 0, 0, -66, 0, -138, 0, 6, 14], 'hypo2': [0, -119, 0, 0, 0, -64, 0, -131, 0, 2, 4], 'hypo3': [0, 0, -116, 0, 0, -95, 0, -58, 0, 18, 12], 'hypo4': [0, 0, -74, 0, 0, -67, 0, -100, 0, 7, 18], 'hypo5': [0, 0, -85, 0, 0, -70, 0, 0, 0, 0, 0], 'hypo6': [0, 0, -130, 0, 0, -112, 0, -68, 0, 4, 2], 'hypo7': [0, 0, -81, 0, 0, -61, 0, 0, 0, 0, 0], 'hypo8': [0, -125, 0, 0, 0, -52, 0, -106, 0, 13, 10], 'hypo9': [0, -101, 0, 0, 0, -113, 0, -138, 0, 4, 14], 'hypo10': [0, 0, -70, 0, 0, -112, 0, 0, 0, 0, 0], 'hypo11': [0, -139, 0, 0, 0, -127, 0, -147, 0, 15, 17], 'hypo12': [0, -95, 0, 0, 0, -134, 0, -146, 0, 19, 3], 'hypo13': [0, 0, -64, 0, 0, -60, 0, -123, 0, 19, 8], 'hypo14': [0, -140, 0, 0, 0, -147, 0, -54, 0, 6, 6], 'hypo15': [0, -78, 0, 0, 0, -139, 0, -62, 0, 4, 1], 'hypo16': [0, -121, 0, 0, 0, -147, 0, -144, 0, 10, 10], 'hypo17': [0, 0, -52, 0, 0, -123, 0, -88, 0, 19, 11], 'hypo18': [0, 0, -57, 0, 0, -138, 0, 0, 0, 0, 0], 'hypo19': [0, -69, 0, 0, 0, -90, 0, -77, 0, 7, 10], 'hypo20': [0, -114, 0, 0, 0, -118, 0, -132, 0, 18, 13], 'hypo21': [0, -119, 0, 0, 0, -134, 0, -77, 0, 16, 7], 'hypo22': [0, 0, -92, 0, 0, -75, 0, 0, 0, 0, 0], 'hypo23': [0, 0, -121, 0, 0, -57, 0, 0, 0, 0, 0], 'hypo24': [0, -106, 0, 0, 0, -108, 0, -98, 0, 1, 8], 'hypo25': [0, 0, -128, 0, 0, -70, 0, -78, 0, 15, 16], 'hypo26': [0, 0, -134, 0, 0, -138, 0, 0, 0, 0, 0], 'hypo27': [0, 0, -140, 0, 0, -122, 0, 0, 0, 0, 0], 'hypo28': [0, 0, -55, 0, 0, -95, 0, -93, 0, 19, 16], 'hypo29': [0, -109, 0, 0, 0, -91, 0, -79, 0, 12, 15], 'hypo30': [0, 0, -109, 0, 0, -111, 0, 0, 0, 0, 0], 'hypo31': [0, 0, -93, 0, 0, -54, 0, 0, 0, 0, 0], 'hypo32': [0, -82, 0, 0, 0, -126, 0, -138, 0, 18, 2], 'hypo33': [0, 0, -64, 0, 0, -116, 0, -141, 0, 2, 7], 'hypo34': [0, 0, -112, 0, 0, -118, 0, 0, 0, 0, 0], 'hypo35': [0, 0, -150, 0, 0, -129, 0, 0, 0, 0, 0], 'hypo36': [0, 0, -51, 0, 0, -105, 0, -131, 0, 17, 2], 'hypo37': [0, 0, -136, 0, 0, -68, 0, -122, 0, 17, 9], 'hypo38': [0, 0, -89, 0, 0, -110, 0, 0, 0, 0, 0], 'hypo39': [0, -97, 0, 0, 0, -65, 0, -113, 0, 7, 13], 'hypo40': [0, -92, 0, 0, 0, -57, 0, -109, 0, 3, 3], 'hypo41': [0, -140, 0, 0, 0, -121, 0, -144, 0, 1, 3], 'hypo42': [0, 0, -142, 0, 0, -143, 0, 0, 0, 0, 0], 'hypo43': [0, 0, -70, 0, 0, -118, 0, -135, 0, 18, 11], 'hypo44': [0, -103, 0, 0, 0, -66, 0, -86, 0, 8, 7], 'hypo45': [0, 0, -79, 0, 0, -54, 0, 0, 0, 0, 0], 'hypo46': [0, 0, -67, 0, 0, -148, 0, -76, 0, 13, 14], 'hypo47': [0, 0, -61, 0, 0, -118, 0, 0, 0, 0, 0], 'hypo48': [0, 0, -121, 0, 0, -150, 0, 0, 0, 0, 0], 'hypo49': [0, -150, 0, 0, 0, -85, 0, -97, 0, 15, 3], 'hypo50': [0, 0, -78, 0, 0, -58, 0, -125, 0, 3, 7], 'hypo51': [0, -67, 0, 0, 0, -91, 0, -118, 0, 1, 13], 'hypo52': [0, 0, -136, 0, 0, -88, 0, -141, 0, 1, 15], 'hypo53': [0, 0, -140, 0, 0, -119, 0, 0, 0, 0, 0], 'hypo54': [0, 0, -51, 0, 0, -106, 0, -118, 0, 10, 1], 'hypo55': [0, 0, -111, 0, 0, -121, 0, -66, 0, 11, 11], 'hypo56': [0, -59, 0, 0, 0, -142, 0, -111, 0, 12, 10], 'hypo57': [0, 0, -108, 0, 0, -68, 0, 0, 0, 0, 0], 'hypo58': [0, 0, -150, 0, 0, -128, 0, 0, 0, 0, 0], 'hypo59': [0, 0, -114, 0, 0, -113, 0, -140, 0, 6, 8], 'hypo60': [0, 0, -113, 0, 0, -92, 0, -91, 0, 4, 12], 'hypo61': [0, 0, -76, 0, 0, -149, 0, 0, 0, 0, 0], 'hypo62': [0, -141, 0, 0, 0, -78, 0, -72, 0, 1, 11], 'hypo63': [0, 0, -91, 0, 0, -82, 0, -129, 0, 7, 6], 'hypo64': [0, 0, -110, 0, 0, -96, 0, -89, 0, 4, 7], 'hypo65': [0, 0, -67, 0, 0, -72, 0, -131, 0, 8, 10], 'hypo66': [0, -128, 0, 0, 0, -109, 0, -118, 0, 3, 1], 'hypo67': [0, 0, -54, 0, 0, -131, 0, -127, 0, 17, 11], 'hypo68': [0, -80, 0, 0, 0, -62, 0, -113, 0, 17, 17], 'hypo69': [0, 0, -76, 0, 0, -78, 0, -101, 0, 17, 10], 'hypo70': [0, -107, 0, 0, 0, -58, 0, -123, 0, 10, 16], 'hypo71': [0, 0, -136, 0, 0, -106, 0, 0, 0, 0, 0], 'hypo72': [0, -52, 0, 0, 0, -128, 0, -95, 0, 4, 5], 'hypo73': [0, 0, -97, 0, 0, -94, 0, -68, 0, 11, 8], 'hypo74': [0, 0, -96, 0, 0, -61, 0, 0, 0, 0, 0], 'hypo75': [0, -130, 0, 0, 0, -138, 0, -116, 0, 7, 8], 'hypo76': [0, 0, -128, 0, 0, -54, 0, -55, 0, 2, 15], 'hypo77': [0, 0, -60, 0, 0, -141, 0, 0, 0, 0, 0], 'hypo78': [0, -52, 0, 0, 0, -95, 0, -53, 0, 3, 8], 'hypo79': [0, 0, -87, 0, 0, -95, 0, -73, 0, 19, 5], 'hypo80': [0, -126, 0, 0, 0, -135, 0, -90, 0, 16, 3], 'hypo81': [0, 0, -59, 0, 0, -94, 0, -105, 0, 6, 10], 'hypo82': [0, 0, -131, 0, 0, -135, 0, 0, 0, 0, 0], 'hypo83': [0, -100, 0, 0, 0, -113, 0, -94, 0, 19, 8], 'hypo84': [0, 0, -72, 0, 0, -109, 0, -110, 0, 13, 13], 'hypo85': [0, 0, -147, 0, 0, -104, 0, -125, 0, 8, 15], 'hypo86': [0, 0, -144, 0, 0, -64, 0, 0, 0, 0, 0], 'hypo87': [0, 0, -125, 0, 0, -127, 0, -123, 0, 5, 18], 'hypo88': [0, 0, -76, 0, 0, -135, 0, 0, 0, 0, 0], 'hypo89': [0, 0, -99, 0, 0, -69, 0, 0, 0, 0, 0], 'hypo90': [0, 0, -112, 0, 0, -132, 0, -60, 0, 15, 14], 'hypo91': [0, 0, -82, 0, 0, -104, 0, -120, 0, 3, 5], 'hypo92': [0, 0, -133, 0, 0, -53, 0, -73, 0, 15, 17], 'hypo93': [0, 0, -124, 0, 0, -71, 0, 0, 0, 0, 0], 'hypo94': [0, 0, -90, 0, 0, -67, 0, -147, 0, 7, 13], 'hypo95': [0, 0, -115, 0, 0, -65, 0, -78, 0, 5, 6], 'hypo96': [0, 0, -141, 0, 0, -125, 0, 0, 0, 0, 0]}
 
 class ContactDetector(contactListener):
     def __init__(self, env):
@@ -142,7 +143,7 @@ class LunarLanderTheta(gym.Env, EzPickle):
         self.world.contactListener_keepref = ContactDetector(self)
         self.world.contactListener = self.world.contactListener_keepref
         self.game_over = False
-        self.prev_shapings = [None, None, None]
+        self.prev_shapings = {hypo: 0 for hypo in HYPOTHESES}
         self.prev_shaping = None
         self.theta = theta
         self.initial_x = None
@@ -348,71 +349,52 @@ class LunarLanderTheta(gym.Env, EzPickle):
         # Get rewards for R1, R2 and R3
         rewards, done, lander_state = self.shape_reward(state, m_power, s_power)
         # Return reward for the selected reward type
-        if self.theta == "center":
-            reward = rewards[0]
-        elif self.theta == "anywhere":
-            reward = rewards[1]
-        elif self.theta == "crash":
-            reward = rewards[2]
+        reward = rewards[self.theta]
 
         return np.array(state, dtype=np.float32), reward,\
                  done, {'reward':reward, 'rewards':rewards,\
                   'awake':lander_state, 'theta':self.theta}
 
     def shape_reward(self, state, m_power, s_power):
-        rewards = [0, 0, 0]
-        shapings = [0, 0, 0]
+        rewards = {hypo: 0 for hypo in HYPOTHESES}
+        shapings = {hypo: 0 for hypo in HYPOTHESES}
 
-        #R1 - Original
-        shapings[0] = \
-            - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
-            - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-            - 100*abs(state[4]) + 10*state[6] + 10*state[7]
+        for shaping in shapings:
+            theta_vec = np.array(HYPOTHESES[shaping])
+            features = np.array([state[1], state[0], np.sqrt(state[0]**2 + state[1]**2), state[2], state[3], np.sqrt(state[2]**2 + state[3]**2), state[4], np.abs(state[4]), state[5], state[6], state[7]])
+            shapings[shaping] = np.dot(theta_vec, features)
 
-        #R2 - No bonus for minimizing distance along x axis
-        shapings[1] = \
-            - 100*np.sqrt(state[1]*state[1]) \
-            - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-            - 100*abs(state[4]) + 10*state[6] + 10*state[7]
+        for reward in rewards:
+            if self.prev_shapings[reward] is not None:
+                rewards[reward] = shapings[reward] - self.prev_shapings[reward]
+            self.prev_shapings[reward] = shapings[reward]
 
-        #R3 - No concern about landing upright
-        shapings[2] = \
-            - 100*np.sqrt(state[0]*state[0] + state[1]*state[1]) \
-            - 100*np.sqrt(state[2]*state[2] + state[3]*state[3]) \
-            - 0.0*abs(state[4]) + 0.0*state[6] + 0.0*state[7]
-
-        for i in range(len(rewards)):
-
-            if self.prev_shapings[i] is not None:
-                rewards[i] = shapings[i] - self.prev_shapings[i]
-            self.prev_shapings[i] = shapings[i]
-
-            rewards[i] -= m_power*0.30  # less fuel spent is better, about -30 for heuristic landing
-            rewards[i] -= s_power*0.03
+            # rewards[i] -= m_power*0.30  # less fuel spent is better, about -30 for heuristic landing
+            # rewards[i] -= s_power*0.03
 
         done = False
         lander_state = True
 
         if self.game_over or abs(state[0]) >= 1.0:
             done = True
-            rewards[0] = -100
-            rewards[1] = -100
-            rewards[2] = +100.0
-            # if np.linalg.norm(state[0]) < 0.1:
-            #     rewards[2] = +100
+            # rewards[0] = -100
+            # rewards[1] = -100
+            # rewards[2] = +100.0
+            # # if np.linalg.norm(state[0]) < 0.1:
+            # #     rewards[2] = +100
             lander_state = False
 
         if not self.lander.awake:
             done = True
-            rewards[0] = 0.0
-            rewards[1] = 0.0
-            rewards[2] = -100.0
-            if np.linalg.norm(state[0]) < 0.1:
-                rewards[0] = +100
-            if np.linalg.norm(state[0] - self.initial_x) < 0.1:
-                rewards[1] = +100
-            # if np.linalg.norm(state[0]) < 0.1:
-            #     rewards[2] = +100
+        #     rewards[0] = 0.0
+        #     rewards[1] = 0.0
+        #     rewards[2] = -100.0
+        #     if np.linalg.norm(state[0]) < 0.1:
+        #         rewards[0] = +100
+        #     if np.linalg.norm(state[0] - self.initial_x) < 0.1:
+        #         rewards[1] = +100
+        #     # if np.linalg.norm(state[0]) < 0.1:
+        #     #     rewards[2] = +100
             lander_state = True
 
         return rewards, done, lander_state

@@ -1,5 +1,5 @@
 import gym
-import lunarlander_theta
+from env.lunarlander_theta.envs.lunarlander_theta import LunarLanderTheta
 import torch
 import numpy as np
 from train_optimal_agent import QNetwork
@@ -7,10 +7,9 @@ import pickle
 
 
 def gen_traj(episodes, theta=None):
-
     # load environment
-    env = gym.make('LunarLanderTheta-v0')
-
+    # env = gym.make('LunarLanderTheta-v0')
+    env = LunarLanderTheta()
     # load our trained q-network
     path = "models/dqn_" + theta + ".pth"
     qnetwork = QNetwork(state_size=8, action_size=4, seed=1)
@@ -48,7 +47,6 @@ def gen_traj(episodes, theta=None):
 
 
 def main():
-
     episodes = 25
     optimals = {'center': [], 'anywhere': [], 'crash': []}
     optimals['center'] = gen_traj(episodes, theta="center")

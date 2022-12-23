@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import os
+import time
 from collections import namedtuple, deque
 
 import gym
@@ -7,9 +9,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import pickle
 
-import lunarlander_theta
+from env.lunarlander_theta.envs.lunarlander_theta import LunarLanderTheta
+
+# import pickle
 
 BUFFER_SIZE = int(1e5)  # replay buffer size
 BATCH_SIZE = 64         # minibatch size
@@ -19,6 +22,7 @@ LR = 5e-4               # learning rate
 UPDATE_EVERY = 4        # how often to update the network
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 
 class QNetwork(nn.Module):
@@ -185,7 +189,7 @@ class ReplayBuffer:
         return len(self.memory)
 
 
-def train(agent, n_episodes=4000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995, theta=None):
+def train(agent, env, n_episodes=4000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_decay=0.995, theta=None):
     """Deep Q-Learning.
 
     Params
@@ -215,14 +219,19 @@ def train(agent, n_episodes=4000, max_t=1000, eps_start=1.0, eps_end=0.01, eps_d
         scores_window.append(score)       # save most recent score
         scores.append(score)              # save most recent score
         eps = max(eps_end, eps_decay*eps) # decrease epsilon
-        print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
+        # print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
         if i_episode % 100 == 0:
-            print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
+            # print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
             torch.save(agent.qnetwork_local.state_dict(), "models/dqn_" + theta + ".pth")
     return scores
 
+
 if __name__ == "__main__":
-    env = gym.make('LunarLanderTheta-v0')
+    # env = gym.make('LunarLanderTheta-v0')
+    env = LunarLanderTheta()
     env.seed(0)
     agent = Agent(state_size=8, action_size=4, seed=0)
+    start_time = time.time()
     scores = train(agent, theta="center")
+    end_time = time.time()
+    print("TRAINING THE LANDER TOOK {} SECONDS".format(end_time - start_time))
