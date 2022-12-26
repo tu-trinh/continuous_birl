@@ -5,13 +5,25 @@ import random
 
 random_policies = []
 beta = 10
-possible_rewards = ["center", "anywhere", "crash"]
-# center_vec = np.array([0, 0, -100, 0, 0, -100, 0, -100, 0, 10, 10])
-# anywhere_vec = np.array([0, -100, 0, 0, 0, -100, 0, -100, 0, 10, 10])
-# crash_vec = np.array([0, 0, -100, 0, 0, -100, 0, 0, 0, 0, 0])
-center_vec = np.array([0, 0, -100, 0, 0, -100, 0, -100, 0, 10, 10])
-anywhere_vec = np.array([0, 0, -200, 0, 0, -50, 0, -200, 0, 5, 5])
-crash_vec = np.array([0, 0, -300, 0, 0, -10, 0, -300, 0, 8, 8])
+num_features = 11
+
+all_hypotheses = {}
+main_hypotheses = {
+    'center': [0, 0, -100, 0, 0, -100, 0, -100, 0, 10, 10],
+    'anywhere': [0, 0, -200, 0, 0, -50, 0, -200, 0, 5, 5],
+    'crash': [0, 0, -300, 0, 0, -10, 0, -300, 0, 8, 8]
+}
+alt_hypotheses = {}
+f = open("hypotheses.txt", "r")
+for line in f:
+    alt_hypotheses.update(eval(line))
+all_hypotheses.update(main_hypotheses)
+all_hypotheses.update(alt_hypotheses)
+
+hypo_policies = pickle.load(open("hypothesis_policies.pkl", "rb"))
+main_policies = pickle.load(open("choices/optimal.pkl", "rb"))
+
+failed_hypotheses = ['hypo3', 'hypo8', 'hypo9', 'hypo11', 'hypo12', 'hypo13', 'hypo14', 'hypo15', 'hypo16', 'hypo17', 'hypo18', 'hypo20', 'hypo21', 'hypo24', 'hypo28', 'hypo29', 'hypo32', 'hypo33', 'hypo36', 'hypo38', 'hypo41', 'hypo43', 'hypo44', 'hypo46', 'hypo49', 'hypo51', 'hypo54', 'hypo59', 'hypo60', 'hypo62', 'hypo64', 'hypo65', 'hypo68', 'hypo70', 'hypo72', 'hypo77', 'hypo78', 'hypo80', 'hypo81', 'hypo83', 'hypo84', 'hypo85', 'hypo87', 'hypo88', 'hypo90', 'hypo91', 'hypo100', 'hypo102', 'hypo110', 'hypo111', 'hypo113', 'hypo119', 'hypo120', 'hypo122', 'hypo126', 'hypo129', 'hypo133']
 
 # Everything is wrapped in one big array.
 # Each episode, aka policy/trajectory, is an array inside here.
@@ -57,17 +69,8 @@ def reward(policy, theta):
             state[6],
             state[7]
         ])
-        if theta == "center":
-            theta_vec = center_vec
-        elif theta == "anywhere":
-            theta_vec = anywhere_vec
-        elif theta == "crash":
-            theta_vec = crash_vec
-        elif theta == "random":
-            theta_vec = np.array([0, random.randint(-120, -80), random.randint(-120, -80), 0, 0, random.randint(-120, -80), 0, random.randint(-120, -80), 0, random.randint(-10, 20), random.randint(-10, 20)])
-        else:
-            theta_vec = theta
-        theta_vec /= np.linalg.norm(theta_vec)
+        theta_vec = all_hypotheses[theta]
+        theta_vec = theta_vec / np.linalg.norm(theta_vec)
         
         shaping = np.dot(theta_vec, features)
         if np.isnan(shaping):
@@ -101,14 +104,16 @@ def random_lander(true_theta):
     env = Lander(true_theta, feature_weights)
     return env
 
-def get_optimal_policy(theta, agent = False):
+def get_optimal_policy(theta, index = 0):
     # Theta options: center, anywhere, crash
-    if not agent:
-        policies = pickle.load(open("choices/optimal.pkl", "rb"))
-        return policies[theta][0]
+    if theta == "center" or theta == "anywhere" or theta == "crash":
+        return main_policies[theta][index]
     else:
-        policies = pickle.load(open("choices/demos.pkl", "rb"))
-        return policies[0]
+        try:
+            policy = hypo_policies[theta][index]
+        except IndexError:
+            policy = hypo_policies[theta][-1]
+        return policy
 
 def generate_random_policies():
     noisies = pickle.load(open("choices/noisies_set.pkl", "rb"))
@@ -117,11 +122,14 @@ def generate_random_policies():
 
 def generate_optimal_demos(num_demos, theta = "center"):
     # demos = pickle.load(open("choices/demos.pkl", "rb"))
-    demos = pickle.load(open("choices/optimal.pkl", "rb"))[theta]
+    if theta == "center" or theta == "anywhere" or theta == "crash":
+        demos = main_policies[theta]
+    else:
+        demos = hypo_policies[theta]
     return demos[:num_demos]
 
 def expected_feature_counts(trajectory):
-    feature_counts = np.array([0 for _ in range(13)])
+    feature_counts = np.array([0 for _ in range(num_features)])
     for waypoint in trajectory:
         state = waypoint[3]
         features = np.array([state[0], state[1], np.sqrt(state[0]**2 + state[1]**2), state[2], state[3], np.sqrt(state[2]**2 + state[3]**2), state[4], np.abs(state[4]), state[5], state[6], state[7]])
@@ -129,26 +137,24 @@ def expected_feature_counts(trajectory):
     return feature_counts / len(trajectory)
 
 def calculate_expected_value_difference(eval_policy, opt_policy, theta, rn = False):
-    if theta == "center":
-        theta_vec = center_vec
-    elif theta == "anywhere":
-        theta_vec = anywhere_vec
-    elif theta == "crash":
-        theta_vec = crash_vec
-    elif theta == "random":
-        theta_vec = np.array([0, random.randint(-120, -80), random.randint(-120, -80), 0, 0, random.randint(-120, -80), 0, random.randint(-120, -80), 0, random.randint(-10, 20), random.randint(-10, 20)])
-    else:
-        theta_vec = theta
-    theta_vec = theta_vec / np.linalg.norm(theta_vec)
+    # if theta == "center":
+    #     theta_vec = center_vec
+    # elif theta == "anywhere":
+    #     theta_vec = anywhere_vec
+    # elif theta == "crash":
+    #     theta_vec = crash_vec
+    # else:
+    #     theta_vec = hypotheses[theta]
+    # theta_vec = theta_vec / np.linalg.norm(theta_vec)
     # V_eval = np.dot(theta_vec, expected_feature_counts(eval_policy))
     # V_opt = np.dot(theta_vec, expected_feature_counts(opt_policy))
-    V_eval = reward(eval_policy, theta_vec)
-    V_opt = reward(opt_policy, theta_vec)
+    V_eval = reward(eval_policy, theta)
+    V_opt = reward(opt_policy, theta)
     if rn:
         V_rand = 0
         for random_policy in random_policies:
             # V_rand += np.dot(theta_vec, expected_feature_counts(random_policy))
-            V_rand += reward(random_policy, theta_vec) / 3
+            V_rand += reward(random_policy, theta)
         V_rand /= len(random_policies)
         evd = (V_opt - V_eval) / (V_opt - V_rand + 0.0001)
     else:
@@ -183,21 +189,6 @@ def listify(arr, policy = True):
         for row in arr:
             grid.append(list(row))
         return grid
-
-def birl(demos):
-    probs = []
-    counters = []
-    for theta in possible_rewards:
-        counters.append(get_optimal_policy(theta))
-    for theta in possible_rewards:
-        demo_reward = np.array([reward(demo, theta) for demo in demos], dtype = np.float32)
-        counter_reward = np.array([reward(demo, theta) for demo in counters], dtype = np.float32)
-        n = np.exp(beta * sum(demo_reward))
-        d = sum(np.exp(beta * counter_reward)) ** len(demos)
-        probs.append(n/d)
-    Z = sum(probs)
-    pmf = np.asarray(probs) / Z
-    return pmf, possible_rewards[np.argmax(pmf)], counters[np.argmax(pmf)]
 
 def generate_theta_vectors(policy, theta):
     theta_vecs = []
@@ -235,11 +226,47 @@ def get_closest_theta(birl_sol):
 BIRL class
 """
 class BIRL:
-    def __init__(self, demos, beta, epsilon=0.0001):
-        self.demonstrations = demos
+    def __init__(self, beta, epsilon = 0.0001):
+        self.demos = {}
+        self.demo_rewards = {theta: [] for theta in possible_rewards}
+        self.counter_rewards = {theta: [] for theta in possible_rewards}
+        self.counter_idx = 0
         self.epsilon = epsilon
         self.beta = beta
-        self.num_mcmc_dims = 11
+        self.num_mcmc_dims = num_features
+    
+    def birl(self, demos):
+        ### Version A: new set of counterfactuals each time
+        # self.demos = demos
+        # probs = []
+        # counters = []
+        # print("ADDING TO CHOICE SET")
+        # for theta in possible_rewards:
+        #     counter = get_optimal_policy(theta, index = self.counter_idx)
+        #     counters.append(counter)
+        # for theta in possible_rewards:
+        #     self.demo_rewards[theta].append(reward(self.demos[-1], theta))
+        #     n = np.exp(self.beta * sum(self.demo_rewards[theta]))
+        #     self.counter_rewards[theta].extend([reward(counter, theta) for counter in counters])
+        #     d = sum(np.exp(self.beta * np.array(self.counter_rewards[theta]))) ** len(self.demos)
+        #     probs.append(n/d)
+        #     print("Likelihood for {}: demo score = {}, denominator = {}, probability = {}".format(theta, reward(self.demos[-1], theta), d, n/d))
+        # Z = sum(probs)
+        # pmf = np.asarray(probs) / Z
+        # self.counter_idx += 1
+        # return pmf, possible_rewards[np.argmax(pmf)], possible_policies[np.argmax(pmf)]
+
+        ### Version B: same set of counterfactuals throughout
+        probs = []
+        for theta in possible_rewards:
+            demo_reward = np.array([reward(demo, theta) for demo in demos], dtype = np.float32)
+            counter_reward = np.array([reward(demo, theta) for demo in possible_policies], dtype = np.float32)
+            n = np.exp(beta * sum(demo_reward))
+            d = sum(np.exp(beta * counter_reward)) ** len(demos)
+            probs.append(n/d)
+        Z = sum(probs)
+        pmf = np.asarray(probs) / Z
+        return pmf, possible_rewards[np.argmax(pmf)], possible_policies[np.argmax(pmf)]
 
     def calc_ll(self, hyp_reward):
         hyp_reward = hyp_reward / np.linalg.norm(hyp_reward)
@@ -259,21 +286,6 @@ class BIRL:
                 denominator += np.exp(self.beta * reward(rand_demo, hyp_reward) / 3)
             ll *= numerator / denominator
         return ll
-    
-    # def birl(demos):
-    #     probs = []
-    #     counters = []
-    #     for theta in possible_rewards:
-    #         counters.append(get_optimal_policy(theta))
-    #     for theta in possible_rewards:
-    #         demo_reward = np.array([reward(demo, theta) for demo in demos], dtype = np.float32)
-    #         counter_reward = np.array([reward(demo, theta) for demo in counters], dtype = np.float32)
-    #         n = np.exp(beta * sum(demo_reward))
-    #         d = sum(np.exp(beta * counter_reward)) ** len(demos)
-    #         probs.append(n/d)
-    #     Z = sum(probs)
-    #     pmf = np.asarray(probs) / Z
-    #     return pmf, possible_rewards[np.argmax(pmf)], counters[np.argmax(pmf)]
 
     def generate_proposal(self, old_sol, stdev, normalize):
         proposal_r = old_sol + stdev * np.random.randn(len(old_sol)) 
@@ -353,3 +365,11 @@ class BIRL:
         burn_indx = int(len(self.chain) * burn_frac)
         mean_r = np.mean(self.chain[burn_indx::skip_rate], axis=0)
         return mean_r
+
+"""
+Demo sufficiency constants
+"""
+# possible_rewards = [key for key in main_hypotheses] + [key for key in alt_hypotheses if key not in failed_hypotheses]
+possible_rewards = ["center", "anywhere", "crash"] + ["hypo67", "hypo55"]
+possible_policies = [get_optimal_policy(theta) for theta in possible_rewards]
+num_hypotheses = len(possible_rewards)

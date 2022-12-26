@@ -1,12 +1,12 @@
 import random
 import utils
-from utils import BIRL
 import copy
 from scipy.stats import norm
 import numpy as np
 import math
 import sys
 import warnings
+import time
 
 
 if __name__ == "__main__":
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     random.seed(rseed)
     np.random.seed(rseed)
 
-    stopping_condition = sys.argv[1] # options: avar, baseline, patience
+    stopping_condition = sys.argv[1] # options: nevd, baseline, patience
 
     debug = False # set to False to suppress terminal outputs
 
@@ -25,27 +25,24 @@ if __name__ == "__main__":
     delta = 0.05
     gamma = 0.95
 
-    # MCMC hyperparameters
-    beta = 10.0 # confidence for mcmc
-    N = 20 # 530 gets around 500 after burn and skip
-    step_stdev = 0.5
-    burn_rate = 0.05
-    skip_rate = 1
-    random_normalization = True # whether or not to normalize with random policy
-    adaptive = True # whether or not to use adaptive step size
+    # BIRL hyperparameters
+    beta = 10.0 # confidence
+    # N = 20
+    # step_stdev = 0.5
+    # burn_rate = 0.05
+    # skip_rate = 1
+    random_normalization = False # whether or not to normalize with random policy
+    # adaptive = True # whether or not to use adaptive step size
     num_worlds = 1
     max_demos = 5
-    true_theta = "center"
+    true_theta = "center" # assume lander wants to land in center
     utils.generate_random_policies()
 
-    if stopping_condition == "avar": # stop learning after passing a-VaR threshold
+    start_time = time.time()
+
+    if stopping_condition == "nevd": # stop learning after passing a-VaR threshold
         # Experiment setup
-        thresholds = [0.1, 0.2, 0.3, 0.4, 0.5] # thresholds on the a-VaR bounds
-        envs = ["" for _ in range(num_worlds)]
-        policies = [utils.get_optimal_policy(true_theta) for _ in range(num_worlds)] # assume lander wants to land in center
-        demos = [[] for _ in range(num_worlds)]
-        possible_rewards = utils.possible_rewards
-        possible_policies = [utils.get_optimal_policy(theta) for theta in possible_rewards]
+        thresholds = [10, 20, 30, 40, 50] # thresholds on the a-VaR bounds
 
         # Metrics to evaluate thresholds
         bounds = {threshold: [] for threshold in thresholds}
@@ -55,57 +52,42 @@ if __name__ == "__main__":
         avg_bound_errors = {threshold: [] for threshold in thresholds}
         policy_optimalities = {threshold: [] for threshold in thresholds}
         policy_accuracies = {threshold: [] for threshold in thresholds}
+        pmfs = {threshold: [] for threshold in thresholds}
+        learned_thetas = {threshold: [] for threshold in thresholds}
         confidence = {threshold: set() for threshold in thresholds}
         accuracies = {threshold: [] for threshold in thresholds}
-        confusion_matrices = {threshold: [[0, 0], [0, 0]] for threshold in thresholds} # predicted by true
+        confusion_matrices = {threshold: [[0, 0], [0, 0]] for threshold in thresholds} # predicted by true, P-NP
 
         for i in range(num_worlds):
             print("DOING WORLD", i + 1)
-            env = envs[i]
-            for M in range(max_demos): # number of demonstrations; we want good policy without needing to see all states
+            birl = utils.BIRL(beta)
+            for M in range(max_demos):
                 print(M + 1, "demonstrations")
-                D = utils.generate_optimal_demos(M + 1, "center")
-                demos[i] = D
+                D = utils.generate_optimal_demos(M + 1, theta = true_theta)
                 if debug:
                     print("running BIRL with demos")
-                    print("demos", demos[i])
-                # create BIRL environment
-                birl = BIRL(demos[i], beta)
-                birl.run_mcmc(N, step_stdev, adaptive = adaptive)
-                burn_indx = int(len(birl.chain) * burn_rate)
-                samples = birl.chain[burn_indx::skip_rate]
-                
-                #generate evaluation policy from running BIRL
-                map_sol = birl.get_map_solution()
-                closest_theta = utils.get_closest_theta(map_sol)
-                print("Closest theta is", closest_theta)
-                map_policy = utils.get_optimal_policy(closest_theta)
+                    print("demos", D)
+                map_pmf, map_sol, map_policy = birl.birl(D)
 
                 #run counterfactual policy loss calculations using eval policy
                 policy_losses = []
-                opt_sample_thetas = []
-                for sample in samples:
-                    closest_theta_sample = utils.get_closest_theta(sample)
-                    opt_policy_for_sample = utils.get_optimal_policy(closest_theta_sample)
-                    opt_sample_thetas.append(closest_theta_sample)
-                    Zi = utils.calculate_expected_value_difference(map_policy, opt_policy_for_sample, sample, rn = random_normalization) # compute policy loss
-                    policy_losses.append(Zi)
+                for j in range(utils.num_hypotheses):
+                    Zj = utils.calculate_expected_value_difference(map_policy, utils.possible_policies[j], utils.possible_rewards[j], rn = random_normalization) # compute policy loss
+                    policy_losses.append((utils.possible_rewards[j], Zj))
 
                 # compute VaR bound
-                N_burned = len(samples)
-                k = math.ceil(N_burned * alpha + norm.ppf(1 - delta) * np.sqrt(N_burned*alpha*(1 - alpha)) - 0.5)
-                if k >= N_burned:
-                    k = N_burned - 1
-                policy_losses.sort()
-                avar_bound = policy_losses[k]
-                print("sample opt policies", opt_sample_thetas)
+                k = math.ceil(utils.num_hypotheses * alpha + norm.ppf(1 - delta) * np.sqrt(utils.num_hypotheses*alpha*(1 - alpha)) - 0.5)
+                if k >= utils.num_hypotheses:
+                    k = utils.num_hypotheses - 1
+                policy_losses.sort(key = lambda pl : pl[1])
+                avar_bound = policy_losses[k][1]
                 print("policy losses", policy_losses)
                 print("BOUND IS", avar_bound)
 
                 # evaluate thresholds
                 for t in range(len(thresholds)):
                     threshold = thresholds[t]
-                    actual = utils.calculate_expected_value_difference(map_policy, possible_policies[possible_rewards.index("center")], "center", rn = random_normalization)
+                    actual = utils.calculate_expected_value_difference(map_policy, utils.possible_policies[utils.possible_rewards.index(true_theta)], true_theta, rn = random_normalization)
                     if avar_bound < threshold:
                         map_evd = actual
                         # store threshold metrics
@@ -115,9 +97,11 @@ if __name__ == "__main__":
                         true_evds[threshold].append(map_evd)
                         avg_bound_errors[threshold].append(avar_bound - map_evd)
                         policy_optimalities[threshold].append(1)
-                        policy_accuracies[threshold].append(utils.calculate_policy_accuracy(possible_policies[possible_rewards.index("center")], map_policy))
+                        policy_accuracies[threshold].append(utils.calculate_policy_accuracy(utils.possible_policies[utils.possible_rewards.index(true_theta)], map_policy))
                         confidence[threshold].add(i)
                         accuracies[threshold].append(avar_bound >= map_evd)
+                        pmfs[threshold].append(map_pmf)
+                        learned_thetas[threshold].append(map_sol)
                         if actual < threshold:
                             confusion_matrices[threshold][0][0] += 1
                         else:
@@ -152,6 +136,12 @@ if __name__ == "__main__":
             print("Policy accuracies")
             for pa in policy_accuracies[threshold]:
                 print(pa)
+            print("PMFs")
+            for pmf in pmfs[threshold]:
+                print(pmf)
+            print("Learned reward functions")
+            for lt in learned_thetas[threshold]:
+                print(lt)
             print("Confidence")
             print(len(confidence[threshold]) / num_worlds)
             print("Accuracy")
@@ -161,7 +151,12 @@ if __name__ == "__main__":
                 print(0.0)
             print("Confusion matrices")
             print(confusion_matrices[threshold])
+        print("Reward hypotheses")
+        for pr in utils.possible_rewards:
+            print(pr, utils.all_hypotheses[pr])
         print("**************************************************")
+        end_time = time.time()
+        print("Time to run: {} minutes".format((end_time - start_time) / 60))
     elif stopping_condition == "wfcb": # stop learning after avar bound < worst-case feature-count bound
         # Experiment setup
         if world == "feature":
