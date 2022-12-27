@@ -6,6 +6,7 @@ import random
 random_policies = []
 beta = 10
 num_features = 11
+num_rollouts = 5
 
 all_hypotheses = {}
 main_hypotheses = {
@@ -23,7 +24,7 @@ all_hypotheses.update(alt_hypotheses)
 hypo_policies = pickle.load(open("hypothesis_policies.pkl", "rb"))
 main_policies = pickle.load(open("choices/optimal.pkl", "rb"))
 
-failed_hypotheses = ['hypo3', 'hypo8', 'hypo9', 'hypo11', 'hypo12', 'hypo13', 'hypo14', 'hypo15', 'hypo16', 'hypo17', 'hypo18', 'hypo20', 'hypo21', 'hypo24', 'hypo28', 'hypo29', 'hypo32', 'hypo33', 'hypo36', 'hypo38', 'hypo41', 'hypo43', 'hypo44', 'hypo46', 'hypo49', 'hypo51', 'hypo54', 'hypo59', 'hypo60', 'hypo62', 'hypo64', 'hypo65', 'hypo68', 'hypo70', 'hypo72', 'hypo77', 'hypo78', 'hypo80', 'hypo81', 'hypo83', 'hypo84', 'hypo85', 'hypo87', 'hypo88', 'hypo90', 'hypo91', 'hypo100', 'hypo102', 'hypo110', 'hypo111', 'hypo113', 'hypo119', 'hypo120', 'hypo122', 'hypo126', 'hypo129', 'hypo133']
+failed_hypotheses = ['hypo3', 'hypo8', 'hypo9', 'hypo11', 'hypo12', 'hypo13', 'hypo14', 'hypo15', 'hypo16', 'hypo17', 'hypo18', 'hypo20', 'hypo21', 'hypo24', 'hypo28', 'hypo29', 'hypo32', 'hypo33', 'hypo36', 'hypo38', 'hypo41', 'hypo43', 'hypo44', 'hypo46', 'hypo49', 'hypo51', 'hypo54', 'hypo60', 'hypo62', 'hypo64', 'hypo65', 'hypo68', 'hypo70', 'hypo72', 'hypo77', 'hypo78', 'hypo80', 'hypo81', 'hypo83', 'hypo84', 'hypo85', 'hypo87', 'hypo88', 'hypo90', 'hypo91', 'hypo100', 'hypo102', 'hypo110', 'hypo111', 'hypo113', 'hypo119', 'hypo120', 'hypo122', 'hypo126', 'hypo129', 'hypo133', 'hypo141', 'hypo144', 'hypo145', 'hypo147', 'hypo153', 'hypo154', 'hypo164', 'hypo178', 'hypo189', 'hypo197']
 
 # Everything is wrapped in one big array.
 # Each episode, aka policy/trajectory, is an array inside here.
@@ -116,9 +117,13 @@ def get_optimal_policy(theta, index = 0):
         return policy
 
 def generate_random_policies():
-    noisies = pickle.load(open("choices/noisies_set.pkl", "rb"))
-    for policy in noisies[0][:5]:
-        random_policies.append(policy)
+    for hypo in main_policies:
+        idx = np.random.choice(range(len(main_policies[hypo])))
+        random_policies.append(main_policies[hypo][idx])
+    for hypo in hypo_policies:
+        if hypo not in failed_hypotheses:
+            idx = np.random.choice(range(len(hypo_policies[hypo])))
+            random_policies.append(hypo_policies[hypo][idx])
 
 def generate_optimal_demos(num_demos, theta = "center"):
     # demos = pickle.load(open("choices/demos.pkl", "rb"))
@@ -128,6 +133,13 @@ def generate_optimal_demos(num_demos, theta = "center"):
         demos = hypo_policies[theta]
     return demos[:num_demos]
 
+def get_policy_rollouts(theta):
+    if theta == "center" or theta == "anywhere" or theta == "crash":
+        rollouts = main_policies[theta][:num_rollouts]
+    else:
+        rollouts = hypo_policies[theta][:num_rollouts]
+    return rollouts
+
 def expected_feature_counts(trajectory):
     feature_counts = np.array([0 for _ in range(num_features)])
     for waypoint in trajectory:
@@ -136,27 +148,15 @@ def expected_feature_counts(trajectory):
         feature_counts = np.add(feature_counts, features)
     return feature_counts / len(trajectory)
 
-def calculate_expected_value_difference(eval_policy, opt_policy, theta, rn = False):
-    # if theta == "center":
-    #     theta_vec = center_vec
-    # elif theta == "anywhere":
-    #     theta_vec = anywhere_vec
-    # elif theta == "crash":
-    #     theta_vec = crash_vec
-    # else:
-    #     theta_vec = hypotheses[theta]
-    # theta_vec = theta_vec / np.linalg.norm(theta_vec)
-    # V_eval = np.dot(theta_vec, expected_feature_counts(eval_policy))
-    # V_opt = np.dot(theta_vec, expected_feature_counts(opt_policy))
-    V_eval = reward(eval_policy, theta)
-    V_opt = reward(opt_policy, theta)
+def calculate_expected_value_difference(map_sol, theta, rn = False):
+    eval_policies = get_policy_rollouts(map_sol)
+    opt_policies = get_policy_rollouts(theta)
+    V_eval = np.mean([reward(eval_policy, theta) for eval_policy in eval_policies])
+    V_opt = np.mean([reward(opt_policy, theta) for opt_policy in opt_policies])
     if rn:
-        V_rand = 0
-        for random_policy in random_policies:
-            # V_rand += np.dot(theta_vec, expected_feature_counts(random_policy))
-            V_rand += reward(random_policy, theta)
-        V_rand /= len(random_policies)
+        V_rand = np.mean([reward(rand_policy, theta) for rand_policy in random_policies])
         evd = (V_opt - V_eval) / (V_opt - V_rand + 0.0001)
+        # print("Theta {}: V_opt = {}, V_eval = {}, V_rand = {}; EVD = {}".format(theta, V_opt, V_eval, V_rand, evd))
     else:
         evd = V_opt - V_eval
     return evd
@@ -266,7 +266,7 @@ class BIRL:
             probs.append(n/d)
         Z = sum(probs)
         pmf = np.asarray(probs) / Z
-        return pmf, possible_rewards[np.argmax(pmf)], possible_policies[np.argmax(pmf)]
+        return pmf, possible_rewards[np.argmax(pmf)]
 
     def calc_ll(self, hyp_reward):
         hyp_reward = hyp_reward / np.linalg.norm(hyp_reward)
@@ -369,7 +369,10 @@ class BIRL:
 """
 Demo sufficiency constants
 """
-# possible_rewards = [key for key in main_hypotheses] + [key for key in alt_hypotheses if key not in failed_hypotheses]
-possible_rewards = ["center", "anywhere", "crash"] + ["hypo67", "hypo55"]
+possible_rewards = [key for key in main_hypotheses] + [key for key in alt_hypotheses if key not in failed_hypotheses]
+# possible_rewards = ["center", "anywhere", "crash"] + ["hypo67", "hypo55"]
 possible_policies = [get_optimal_policy(theta) for theta in possible_rewards]
 num_hypotheses = len(possible_rewards)
+
+# if __name__ == "__main__":
+    # print(len(possible_rewards))

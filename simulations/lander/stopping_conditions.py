@@ -18,6 +18,8 @@ if __name__ == "__main__":
 
     stopping_condition = sys.argv[1] # options: nevd, baseline, patience
 
+    start_time = time.time()
+
     debug = False # set to False to suppress terminal outputs
 
     # Hyperparameters
@@ -31,18 +33,16 @@ if __name__ == "__main__":
     # step_stdev = 0.5
     # burn_rate = 0.05
     # skip_rate = 1
-    random_normalization = False # whether or not to normalize with random policy
+    random_normalization = True # whether or not to normalize with random policy
     # adaptive = True # whether or not to use adaptive step size
-    num_worlds = 1
-    max_demos = 5
+    num_worlds = 20
+    max_demos = 10
     true_theta = "center" # assume lander wants to land in center
     utils.generate_random_policies()
 
-    start_time = time.time()
-
     if stopping_condition == "nevd": # stop learning after passing a-VaR threshold
         # Experiment setup
-        thresholds = [10, 20, 30, 40, 50] # thresholds on the a-VaR bounds
+        thresholds = [0.01, 0.02, 0.03, 0.04, 0.05] # thresholds on the a-VaR bounds
 
         # Metrics to evaluate thresholds
         bounds = {threshold: [] for threshold in thresholds}
@@ -67,12 +67,12 @@ if __name__ == "__main__":
                 if debug:
                     print("running BIRL with demos")
                     print("demos", D)
-                map_pmf, map_sol, map_policy = birl.birl(D)
+                map_pmf, map_sol = birl.birl(D)
 
                 #run counterfactual policy loss calculations using eval policy
                 policy_losses = []
                 for j in range(utils.num_hypotheses):
-                    Zj = utils.calculate_expected_value_difference(map_policy, utils.possible_policies[j], utils.possible_rewards[j], rn = random_normalization) # compute policy loss
+                    Zj = utils.calculate_expected_value_difference(map_sol, utils.possible_rewards[j], rn = random_normalization) # compute policy loss
                     policy_losses.append((utils.possible_rewards[j], Zj))
 
                 # compute VaR bound
@@ -87,7 +87,8 @@ if __name__ == "__main__":
                 # evaluate thresholds
                 for t in range(len(thresholds)):
                     threshold = thresholds[t]
-                    actual = utils.calculate_expected_value_difference(map_policy, utils.possible_policies[utils.possible_rewards.index(true_theta)], true_theta, rn = random_normalization)
+                    # actual = utils.calculate_expected_value_difference(map_sol, true_theta, rn = random_normalization)
+                    actual = 0
                     if avar_bound < threshold:
                         map_evd = actual
                         # store threshold metrics
@@ -97,7 +98,7 @@ if __name__ == "__main__":
                         true_evds[threshold].append(map_evd)
                         avg_bound_errors[threshold].append(avar_bound - map_evd)
                         policy_optimalities[threshold].append(1)
-                        policy_accuracies[threshold].append(utils.calculate_policy_accuracy(utils.possible_policies[utils.possible_rewards.index(true_theta)], map_policy))
+                        policy_accuracies[threshold].append(utils.calculate_policy_accuracy(utils.possible_policies[utils.possible_rewards.index(true_theta)], utils.possible_policies[np.argmax(map_pmf)]))
                         confidence[threshold].add(i)
                         accuracies[threshold].append(avar_bound >= map_evd)
                         pmfs[threshold].append(map_pmf)
