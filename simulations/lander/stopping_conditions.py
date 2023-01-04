@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     if stopping_condition == "nevd": # stop learning after passing a-VaR threshold
         # Experiment setup
-        thresholds = [0.01, 0.02, 0.03, 0.04, 0.05] # thresholds on the a-VaR bounds
+        thresholds = [10, 20, 30, 40, 50] # thresholds on the a-VaR bounds
 
         # Metrics to evaluate thresholds
         bounds = {threshold: [] for threshold in thresholds}
