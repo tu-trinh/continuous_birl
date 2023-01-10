@@ -36,13 +36,13 @@ if __name__ == "__main__":
     random_normalization = True # whether or not to normalize with random policy
     # adaptive = True # whether or not to use adaptive step size
     num_worlds = 20
-    max_demos = 10
+    max_demos = 20
     true_theta = "center" # assume lander wants to land in center
     utils.generate_random_policies()
 
     if stopping_condition == "nevd": # stop learning after passing a-VaR threshold
         # Experiment setup
-        thresholds = [10, 20, 30, 40, 50] # thresholds on the a-VaR bounds
+        thresholds = [0.1, 0.2, 0.3, 0.4, 0.5] # thresholds on the a-VaR bounds
 
         # Metrics to evaluate thresholds
         bounds = {threshold: [] for threshold in thresholds}
@@ -87,8 +87,8 @@ if __name__ == "__main__":
                 # evaluate thresholds
                 for t in range(len(thresholds)):
                     threshold = thresholds[t]
-                    # actual = utils.calculate_expected_value_difference(map_sol, true_theta, rn = random_normalization)
-                    actual = 0
+                    actual = utils.calculate_expected_value_difference(map_sol, true_theta, rn = random_normalization)
+                    # actual = 0
                     if avar_bound < threshold:
                         map_evd = actual
                         # store threshold metrics
@@ -156,8 +156,6 @@ if __name__ == "__main__":
         for pr in utils.possible_rewards:
             print(pr, utils.all_hypotheses[pr])
         print("**************************************************")
-        end_time = time.time()
-        print("Time to run: {} minutes".format((end_time - start_time) / 60))
     elif stopping_condition == "wfcb": # stop learning after avar bound < worst-case feature-count bound
         # Experiment setup
         if world == "feature":
@@ -507,14 +505,10 @@ if __name__ == "__main__":
             print("Accuracy")
             print(sum(accuracies[threshold]) / num_worlds)
             print("**************************************************")
-    elif stopping_condition == "baseline_pi": # stop learning once learned policy is some degree better than baseline policy
+    elif stopping_condition == "baseline": # stop learning once learned policy is some degree better than baseline policy
         # Experiment setup
-        thresholds = [round(t, 1) for t in np.arange(start = 0.0, stop = 1.1, step = 0.1)] # thresholds on the percent improvement
-        envs = ["" for _ in range(num_worlds)]
-        policies = [utils.get_optimal_policy(true_theta) for _ in range(num_worlds)] # assume lander wants to land in center
-        demos = [[] for _ in range(num_worlds)]
-        possible_rewards = utils.possible_rewards
-        possible_policies = [utils.get_optimal_policy(theta) for theta in possible_rewards]
+        # thresholds = [round(t, 1) for t in np.arange(start = 0.0, stop = 1.1, step = 0.1)] # thresholds on the percent improvement
+        thresholds = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
         # Metrics to evaluate thresholds
         pct_improvements = {threshold: [] for threshold in thresholds}
@@ -524,112 +518,56 @@ if __name__ == "__main__":
         avg_bound_errors = {threshold: [] for threshold in thresholds}
         policy_optimalities = {threshold: [] for threshold in thresholds}
         policy_accuracies = {threshold: [] for threshold in thresholds}
+        pmfs = {threshold: [] for threshold in thresholds}
         confidence = {threshold: set() for threshold in thresholds}
         accuracies = {threshold: [] for threshold in thresholds}
-        confusion_matrices = {threshold: [[0, 0], [0, 0]] for threshold in thresholds} # predicted by true
+        confusion_matrices = {threshold: [[0, 0], [0, 0]] for threshold in thresholds} # predicted by true, P-NP
 
         for i in range(num_worlds):
             print("DOING WORLD", i + 1)
-            env = envs[i]
-            baseline_pi = mdp_utils.get_nonpessimal_policy(env)
-            baseline_evd = mdp_utils.calculate_expected_value_difference(baseline_pi, env, {}, rn = random_normalization)
-            baseline_optimality = mdp_utils.calculate_percentage_optimal_actions(baseline_pi, env)
-            baseline_accuracy = mdp_utils.calculate_policy_accuracy(policies[i], baseline_pi)
-            print("BASELINE POLICY: evd {}, policy optimality {}, and policy accuracy {}".format(baseline_evd, baseline_optimality, baseline_accuracy))
-            for M in range(len(demo_order)): # number of demonstrations; we want good policy without needing to see all states
-                # print("Using {} demos".format(M + 1))
-                if demo_type == "pairs":
-                    try:
-                        D = mdp_utils.generate_optimal_demo(env, demo_order[M])[0]
-                        demos[i].append(D)
-                    except IndexError:
-                        pass
-                    if debug:
-                        print("running BIRL with demos")
-                        print("demos", demos[i])
-                    birl = bayesian_irl.BIRL(env, demos[i], beta) # create BIRL environment
-                elif demo_type == "trajectories":
-                    D = mdp_utils.generate_optimal_demo(env, demo_order[M])[:int(1/(1 - gamma))]
-                    demos[i].append(D)
-                    if debug:
-                        print("running BIRL with demos")
-                        print("demos", demos[i])
-                    birl = bayesian_irl.BIRL(env, list(set([pair for traj in demos[i] for pair in traj])), beta)
-                # use MCMC to generate sequence of sampled rewards
-                birl.run_mcmc(N, step_stdev, adaptive = adaptive)
-                #burn initial samples and skip every skip_rate for efficiency
-                burn_indx = int(len(birl.chain) * burn_rate)
-                samples = birl.chain[burn_indx::skip_rate]
-                #check if MCMC seems to be mixing properly
+            birl = utils.BIRL(beta)
+            base_theta = "hypo45"
+            baseline_pi = utils.get_nonpessimal_policy(base_theta)
+            baseline_evd = utils.calculate_expected_value_difference(base_theta, true_theta, rn = random_normalization)
+            baseline_accuracy = utils.calculate_policy_accuracy(utils.possible_policies[utils.possible_rewards.index(true_theta)], baseline_pi)
+            print("BASELINE POLICY: evd {} and policy accuracy {}".format(baseline_evd, baseline_accuracy))
+            for M in range(max_demos):
+                print(M + 1, "demonstrations")
+                D = utils.generate_optimal_demos(M + 1, theta = true_theta)
                 if debug:
-                    if birl.accept_rate > 0.7:
-                        msg = ", too high, probably need to increase stdev"
-                    elif birl.accept_rate < 0.2:
-                        msg = ", too low, probably need to decrease stdev"
-                    else:
-                        msg = ""
-                    print("accept rate: " + str(birl.accept_rate) + msg) #good to tune number of samples and stepsize to have this around 50%
-                #generate evaluation policy from running BIRL
-                map_env = copy.deepcopy(env)
-                map_env.set_rewards(birl.get_map_solution())
-                map_policy = mdp_utils.get_optimal_policy(map_env)
-                #debugging to visualize the learned policy
-                if debug:
-                    print("True weights", env.feature_weights)
-                    print("True policy")
-                    # mdp_utils.visualize_policy(policies[i], env)
-                    print("MAP weights", map_env.feature_weights)
-                    print("MAP policy")
-                    # mdp_utils.visualize_policy(map_policy, map_env)
-                    policy_optimality = mdp_utils.calculate_percentage_optimal_actions(map_policy, env)
-                    print("Policy optimality:", policy_optimality)
-                    policy_accuracy = mdp_utils.calculate_policy_accuracy(policies[i], map_policy)
-                    print("Policy accuracy:", policy_accuracy)
+                    print("running BIRL with demos")
+                    print("demos", D)
+                map_pmf, map_sol = birl.birl(D)
 
                 # get percent improvements
                 improvements = []
-                for sample in samples:
-                    learned_env = copy.deepcopy(env)
-                    learned_env.set_rewards(sample)
-                    # print("Sample reward:", sample)
-                    vb, ve, improvement = mdp_utils.calculate_percent_improvement(learned_env, baseline_pi, map_policy)
-                    # print("V base: {}, V evail: {}".format(vb, ve))
-                    improvements.append(improvement)
-                # print("Percent improvement: {}".format(improvement))
-                # print("Mean V_base: {}, mean V_eval: {}, percent improvement: {}".format(V_base, V_eval, improvement))
+                for j in range(utils.num_hypotheses):
+                    improvement = utils.calculate_percent_improvement(map_sol, utils.possible_rewards[j], base_theta)
+                    improvements.append((utils.possible_rewards[j], improvement))
 
                 # evaluate 95% confidence on lower bound of improvement
-                improvements = np.nan_to_num(improvements).tolist()
-                improvements.sort(reverse = True)
-                N_burned = len(samples)
-                # k = math.ceil(N_burned*(1 - alpha) + norm.ppf(1 - delta) * np.sqrt(N_burned*(1 - alpha)*alpha) - 0.5)
-                k = math.ceil(N_burned*alpha + norm.ppf(1 - delta) * np.sqrt(N_burned*alpha*(1 - alpha)) - 0.5)
-                # print("Improvements:", improvements)
-                # print("Bound {}: {} of {}".format(improvements[k], k, N_burned))
-                if k >= N_burned:
-                    k = N_burned - 1
-                bound = improvements[k]
-                if debug:
-                    print("VaR bound:", bound)
+                k = math.ceil(utils.num_hypotheses*alpha + norm.ppf(1 - delta) * np.sqrt(utils.num_hypotheses*alpha*(1 - alpha)) - 0.5)
+                if k >= utils.num_hypotheses:
+                    k = utils.num_hypotheses - 1
+                improvements.sort(key = lambda i : i[1], reverse = True)
+                bound = improvements[k][1]
+                print("percent improvements", improvements)
+                print("BOUND IS", bound)
                 
                 # evaluate thresholds
                 for t in range(len(thresholds)):
                     threshold = thresholds[t]
-                    _, _, actual = mdp_utils.calculate_percent_improvement(env, baseline_pi, map_policy)
+                    actual = utils.calculate_percent_improvement(map_sol, true_theta, base_theta)
                     if bound > threshold:
-                        # print("Comparing {} with threshold {}, passed".format(improvement, threshold))
-                        map_evd = mdp_utils.calculate_expected_value_difference(map_policy, env, birl.value_iters, rn = random_normalization)
+                        map_evd = utils.calculate_expected_value_difference(map_sol, true_theta, rn = random_normalization)
                         # store threshold metrics
                         pct_improvements[threshold].append(bound)
                         num_demos[threshold].append(M + 1)
-                        if demo_type == "pairs":
-                            pct_states[threshold].append((M + 1) / (num_rows * num_cols))
-                        elif demo_type == "trajectories":
-                            pct_states[threshold].append((M + 1) * int(1/(1 - gamma)) / (num_rows * num_cols))
+                        pct_states[threshold].append((M + 1) / max_demos)
                         true_evds[threshold].append(map_evd)
                         avg_bound_errors[threshold].append(actual - bound)
-                        policy_optimalities[threshold].append(mdp_utils.calculate_percentage_optimal_actions(map_policy, env))
-                        policy_accuracies[threshold].append(mdp_utils.calculate_policy_accuracy(policies[i], map_policy))
+                        policy_optimalities[threshold].append(1)
+                        policy_accuracies[threshold].append(utils.calculate_policy_accuracy(utils.possible_policies[utils.possible_rewards.index(true_theta)], utils.possible_policies[np.argmax(map_pmf)]))
                         confidence[threshold].add(i)
                         accuracies[threshold].append(bound <= actual)
                         if actual > threshold:
@@ -675,4 +613,10 @@ if __name__ == "__main__":
                 print(0.0)
             print("Confusion matrices")
             print(confusion_matrices[threshold])
+        print("Reward hypotheses")
+        for pr in utils.possible_rewards:
+            print(pr, utils.all_hypotheses[pr])
         print("**************************************************")
+    
+    end_time = time.time()
+    print("Time to run: {} minutes".format((end_time - start_time) / 60))

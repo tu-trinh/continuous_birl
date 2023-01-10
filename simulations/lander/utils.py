@@ -8,6 +8,8 @@ beta = 10
 num_features = 11
 num_rollouts = 5
 
+type = "pairs"
+
 all_hypotheses = {}
 main_hypotheses = {
     'center': [0, 0, -100, 0, 0, -100, 0, -100, 0, 10, 10],
@@ -24,7 +26,7 @@ all_hypotheses.update(alt_hypotheses)
 hypo_policies = pickle.load(open("hypothesis_policies.pkl", "rb"))
 main_policies = pickle.load(open("choices/optimal.pkl", "rb"))
 
-failed_hypotheses = ['hypo3', 'hypo8', 'hypo9', 'hypo11', 'hypo12', 'hypo13', 'hypo14', 'hypo15', 'hypo16', 'hypo17', 'hypo18', 'hypo20', 'hypo21', 'hypo24', 'hypo28', 'hypo29', 'hypo32', 'hypo33', 'hypo36', 'hypo38', 'hypo41', 'hypo43', 'hypo44', 'hypo46', 'hypo49', 'hypo51', 'hypo54', 'hypo60', 'hypo62', 'hypo64', 'hypo65', 'hypo68', 'hypo70', 'hypo72', 'hypo77', 'hypo78', 'hypo80', 'hypo81', 'hypo83', 'hypo84', 'hypo85', 'hypo87', 'hypo88', 'hypo90', 'hypo91', 'hypo100', 'hypo102', 'hypo110', 'hypo111', 'hypo113', 'hypo119', 'hypo120', 'hypo122', 'hypo126', 'hypo129', 'hypo133', 'hypo141', 'hypo144', 'hypo145', 'hypo147', 'hypo153', 'hypo154', 'hypo164', 'hypo178', 'hypo189', 'hypo197']
+failed_hypotheses = ['hypo3', 'hypo8', 'hypo9', 'hypo11', 'hypo12', 'hypo13', 'hypo14', 'hypo15', 'hypo16', 'hypo17', 'hypo18', 'hypo20', 'hypo21', 'hypo24', 'hypo28', 'hypo29', 'hypo32', 'hypo33', 'hypo36', 'hypo38', 'hypo41', 'hypo43', 'hypo44', 'hypo46', 'hypo49', 'hypo51', 'hypo54', 'hypo60', 'hypo62', 'hypo64', 'hypo65', 'hypo67', 'hypo68', 'hypo70', 'hypo72', 'hypo77', 'hypo78', 'hypo80', 'hypo81', 'hypo83', 'hypo84', 'hypo85', 'hypo87', 'hypo88', 'hypo90', 'hypo91', 'hypo100', 'hypo102', 'hypo110', 'hypo111', 'hypo113', 'hypo119', 'hypo120', 'hypo122', 'hypo126', 'hypo129', 'hypo133', 'hypo141', 'hypo144', 'hypo145', 'hypo147', 'hypo153', 'hypo154', 'hypo164', 'hypo178', 'hypo189', 'hypo197']
 
 # Everything is wrapped in one big array.
 # Each episode, aka policy/trajectory, is an array inside here.
@@ -46,17 +48,52 @@ class Lander:
 Utility functions
 """
 def reward(policy, theta):
-    R = 0
-    shaping = 0
-    prev_shaping = None
-    reward = 0
-    initial_waypoint = policy[0]
-    initial_state = initial_waypoint[3]
-    initial_x = initial_state[0]
-    for i, waypoint in enumerate(policy):
-        action = waypoint[1]
-        awake = waypoint[2]
-        state = waypoint[3]
+    depth = lambda L: isinstance(L, list) and max(map(depth, L)) + 1
+    type = "traj" if depth(policy) == 2 else "pairs" # pairs depth is 1
+
+    if type == "traj": # a "policy" here is one trajectory
+        R = 0
+        shaping = 0
+        prev_shaping = None
+        reward = 0
+        initial_waypoint = policy[0]
+        initial_state = initial_waypoint[3]
+        initial_x = initial_state[0]
+        for i, waypoint in enumerate(policy):
+            action = waypoint[1]
+            awake = waypoint[2]
+            state = waypoint[3]
+            features = np.array([
+                state[0],
+                state[1],
+                np.sqrt(state[0]**2 + state[1]**2),
+                state[2],
+                state[3],
+                np.sqrt(state[2]**2 + state[3]**2),
+                state[4],
+                np.abs(state[4]),
+                state[5],
+                state[6],
+                state[7]
+            ])
+            theta_vec = all_hypotheses[theta]
+            theta_vec = theta_vec / np.linalg.norm(theta_vec)
+            
+            shaping = np.dot(theta_vec, features)
+            if np.isnan(shaping):
+                shaping = 0.0001
+            if prev_shaping is not None:
+                reward = shaping - prev_shaping
+            prev_shaping = shaping
+            # if action == 1 or 3:
+            #     reward -= 0.03
+            # elif action == 2:
+            #     reward -= 0.30
+            R += reward
+        return R / 100
+    elif type == "pairs": # a "policy" here is one state
+        state = policy[3]
+        reward = 0
         features = np.array([
             state[0],
             state[1],
@@ -72,19 +109,11 @@ def reward(policy, theta):
         ])
         theta_vec = all_hypotheses[theta]
         theta_vec = theta_vec / np.linalg.norm(theta_vec)
-        
-        shaping = np.dot(theta_vec, features)
-        if np.isnan(shaping):
-            shaping = 0.0001
-        if prev_shaping is not None:
-            reward = shaping - prev_shaping
-        prev_shaping = shaping
-        # if action == 1 or 3:
-        #     reward -= 0.03
-        # elif action == 2:
-        #     reward -= 0.30
-        R += reward
-    return R / 100
+        reward = np.dot(theta_vec, features)
+        if np.isnan(reward):
+            reward = 0.0001
+        return reward
+
     
 def random_lander(true_theta):
     # features
@@ -116,6 +145,9 @@ def get_optimal_policy(theta, index = 0):
             policy = hypo_policies[theta][-1]
         return policy
 
+def get_nonpessimal_policy(base_theta):
+    return hypo_policies[base_theta][10]
+
 def generate_random_policies():
     for hypo in main_policies:
         idx = np.random.choice(range(len(main_policies[hypo])))
@@ -131,7 +163,11 @@ def generate_optimal_demos(num_demos, theta = "center"):
         demos = main_policies[theta]
     else:
         demos = hypo_policies[theta]
-    return demos[:num_demos]
+    if type == "traj":
+        return demos[:num_demos]
+    elif type == "pairs":
+        return demos[0][:num_demos]
+
 
 def get_policy_rollouts(theta):
     if theta == "center" or theta == "anywhere" or theta == "crash":
@@ -160,6 +196,16 @@ def calculate_expected_value_difference(map_sol, theta, rn = False):
     else:
         evd = V_opt - V_eval
     return evd
+
+def calculate_percent_improvement(map_sol, alt_theta, base_theta):
+    eval_policies = get_policy_rollouts(map_sol)
+    base_policies = get_policy_rollouts(base_theta)
+    V_eval = np.mean([reward(eval_policy, alt_theta) for eval_policy in eval_policies])
+    V_base = np.mean([reward(base_policy, alt_theta) for base_policy in base_policies])
+    imp = (np.mean(V_eval) - np.mean(V_base)) / np.abs(np.mean(V_base))
+    if np.isnan(imp):
+        return 0.0
+    return imp
 
 def calculate_policy_accuracy(opt_policy, eval_policy, epsilon = 0.0001):
     matches = 0
@@ -260,7 +306,11 @@ class BIRL:
         probs = []
         for theta in possible_rewards:
             demo_reward = np.array([reward(demo, theta) for demo in demos], dtype = np.float32)
-            counter_reward = np.array([reward(demo, theta) for demo in possible_policies], dtype = np.float32)
+            if type == "traj":
+                counter_reward = np.array([reward(demo, theta) for demo in possible_policies], dtype = np.float32)
+            elif type == "pairs":
+                counters = [pp[np.random.choice(range(len(pp)))] for pp in possible_policies]
+                counter_reward = np.array([reward(demo, theta) for demo in counters], dtype = np.float32)
             n = np.exp(beta * sum(demo_reward))
             d = sum(np.exp(beta * counter_reward)) ** len(demos)
             probs.append(n/d)
@@ -370,7 +420,7 @@ class BIRL:
 Demo sufficiency constants
 """
 possible_rewards = [key for key in main_hypotheses] + [key for key in alt_hypotheses if key not in failed_hypotheses]
-# possible_rewards = ["center", "anywhere", "crash"] + ["hypo67", "hypo55"]
+# possible_rewards = ["center", "anywhere", "crash"] + ["hypo55"]
 possible_policies = [get_optimal_policy(theta) for theta in possible_rewards]
 num_hypotheses = len(possible_rewards)
 

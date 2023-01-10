@@ -1,0 +1,171 @@
+DOING WORLD 1
+BASELINE POLICY: evd 1.9694799380794985 and policy accuracy 0.28448275862068967
+1 demonstrations
+percent improvements [('crash', 2.3035852127651926), ('anywhere', 1.9964176250335544), ('hypo55', 1.8597624869165073), ('center', 1.5593611979489144)]
+BOUND IS 1.5593611979489144
+2 demonstrations
+percent improvements [('crash', 2.249157788235279), ('anywhere', 1.9434888332201823), ('hypo55', 1.7928233298218816), ('center', 1.510147046136448)]
+BOUND IS 1.510147046136448
+3 demonstrations
+percent improvements [('crash', 2.4509233169964606), ('hypo55', 2.1870596496947226), ('anywhere', 2.174697400185223), ('center', 1.7711105768902264)]
+BOUND IS 1.7711105768902264
+4 demonstrations
+percent improvements [('crash', 2.4509233169964606), ('hypo55', 2.1870596496947226), ('anywhere', 2.174697400185223), ('center', 1.7711105768902264)]
+BOUND IS 1.7711105768902264
+5 demonstrations
+percent improvements [('crash', 2.4509233169964606), ('hypo55', 2.1870596496947226), ('anywhere', 2.174697400185223), ('center', 1.7711105768902264)]
+BOUND IS 1.7711105768902264
+NEW THRESHOLD 0.1
+Percent Improvements
+1.5593611979489144
+1.510147046136448
+1.7711105768902264
+1.7711105768902264
+1.7711105768902264
+Num demos
+1
+2
+3
+4
+5
+Percent states
+0.2
+0.4
+0.6
+0.8
+1.0
+True EVDs
+0.23546590436942302
+0.2901921794698956
+0.0
+0.0
+0.0
+Bound errors
+0.0
+0.0
+0.0
+0.0
+0.0
+Policy optimalities
+1
+1
+1
+1
+1
+Policy accuracies
+0.2974137931034483
+0.22844827586206898
+1.0
+1.0
+1.0
+Confidence
+1.0
+Accuracy
+1.0
+Confusion matrices
+[[5, 0], [0, 0]]
+NEW THRESHOLD 0.2
+Percent Improvements
+1.5593611979489144
+1.510147046136448
+1.7711105768902264
+1.7711105768902264
+1.7711105768902264
+Num demos
+1
+2
+3
+4
+5
+Percent states
+0.2
+0.4
+0.6
+0.8
+1.0
+True EVDs
+0.23546590436942302
+0.2901921794698956
+0.0
+0.0
+0.0
+Bound errors
+0.0
+0.0
+0.0
+0.0
+0.0
+Policy optimalities
+1
+1
+1
+1
+1
+Policy accuracies
+0.2974137931034483
+0.22844827586206898
+1.0
+1.0
+1.0
+Confidence
+1.0
+Accuracy
+1.0
+Confusion matrices
+[[5, 0], [0, 0]]
+NEW THRESHOLD 0.3
+Percent Improvements
+1.5593611979489144
+1.510147046136448
+1.7711105768902264
+1.7711105768902264
+1.7711105768902264
+Num demos
+1
+2
+3
+4
+5
+Percent states
+0.2
+0.4
+0.6
+0.8
+1.0
+True EVDs
+0.23546590436942302
+0.2901921794698956
+0.0
+0.0
+0.0
+Bound errors
+0.0
+0.0
+0.0
+0.0
+0.0
+Policy optimalities
+1
+1
+1
+1
+1
+Policy accuracies
+0.2974137931034483
+0.22844827586206898
+1.0
+1.0
+1.0
+Confidence
+1.0
+Accuracy
+1.0
+Confusion matrices
+[[5, 0], [0, 0]]
+Reward hypotheses
+center [0, 0, -100, 0, 0, -100, 0, -100, 0, 10, 10]
+anywhere [0, 0, -200, 0, 0, -50, 0, -200, 0, 5, 5]
+crash [0, 0, -300, 0, 0, -10, 0, -300, 0, 8, 8]
+hypo55 [0, 0, -111, 0, 0, -121, 0, -66, 0, 11, 11]
+**************************************************
+Time to run: 0.8103941957155864 minutes
