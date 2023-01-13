@@ -36,7 +36,7 @@ if __name__ == "__main__":
     random_normalization = True # whether or not to normalize with random policy
     # adaptive = True # whether or not to use adaptive step size
     num_worlds = 20
-    max_demos = 20
+    max_demos = 10
     true_theta = "center" # assume lander wants to land in center
     utils.generate_random_policies()
 
