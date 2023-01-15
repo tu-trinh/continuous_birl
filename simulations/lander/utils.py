@@ -419,7 +419,7 @@ class BIRL:
 """
 Demo sufficiency constants
 """
-possible_rewards = [key for key in main_hypotheses] + [key for key in alt_hypotheses if key not in failed_hypotheses]
+possible_rewards = [key for key in main_hypotheses] + [key for key in alt_hypotheses if key not in failed_hypotheses][::7]
 # possible_rewards = ["center", "anywhere", "crash"] + ["hypo55"]
 possible_policies = [get_optimal_policy(theta) for theta in possible_rewards]
 num_hypotheses = len(possible_rewards)
