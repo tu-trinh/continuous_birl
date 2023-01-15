@@ -17,6 +17,7 @@ if __name__ == "__main__":
     np.random.seed(rseed)
 
     stopping_condition = sys.argv[1] # options: nevd, baseline, patience
+    rand_norm = sys.argv[2] # options: true, false
 
     start_time = time.time()
 
@@ -33,7 +34,7 @@ if __name__ == "__main__":
     # step_stdev = 0.5
     # burn_rate = 0.05
     # skip_rate = 1
-    random_normalization = True # whether or not to normalize with random policy
+    random_normalization = True if rand_norm == "true" else False # whether or not to normalize with random policy
     # adaptive = True # whether or not to use adaptive step size
     num_worlds = 20
     max_demos = 10
