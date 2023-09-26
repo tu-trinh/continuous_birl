@@ -36,9 +36,9 @@ if __name__ == "__main__":
     # skip_rate = 1
     random_normalization = True if rand_norm == "true" else False # whether or not to normalize with random policy
     # adaptive = True # whether or not to use adaptive step size
-    num_worlds = 20
-    max_demos = 10
-    true_theta = "center" # assume lander wants to land in center
+    num_worlds = 1
+    max_demos = 5
+    true_theta = "anywhere" # assume lander wants to land in center
     utils.generate_random_policies()
 
     if stopping_condition == "nevd": # stop learning after passing a-VaR threshold

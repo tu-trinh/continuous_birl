@@ -1,0 +1,14 @@
+bad demos
+NEW THRESHOLD 0.5
+Policy loss bounds
+0.006676579889712616
+Num demos
+1
+**************************************************
+good demos
+NEW THRESHOLD 0.5
+Policy loss bounds
+0.00019513083122317532
+Num demos
+1
+**************************************************

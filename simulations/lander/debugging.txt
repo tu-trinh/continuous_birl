@@ -1,42 +1,78 @@
 DOING WORLD 1
-BASELINE POLICY: evd 1.9694799380794985 and policy accuracy 0.28448275862068967
 1 demonstrations
-percent improvements [('crash', 2.3035852127651926), ('anywhere', 1.9964176250335544), ('hypo55', 1.8597624869165073), ('center', 1.5593611979489144)]
-BOUND IS 1.5593611979489144
+Comparing hypo55 with center
+Comparing hypo55 with anywhere
+Comparing hypo55 with crash
+Comparing hypo55 with hypo55
+policy losses [('crash', -0.09804455272863206), ('anywhere', -0.012002594740956371), ('hypo55', 0.0), ('center', 0.23546590436942302)]
+BOUND IS 0.23546590436942302
+Comparing hypo55 with center
+Comparing hypo55 with center
+Comparing hypo55 with center
+Comparing hypo55 with center
+Comparing hypo55 with center
 2 demonstrations
-percent improvements [('crash', 2.249157788235279), ('anywhere', 1.9434888332201823), ('hypo55', 1.7928233298218816), ('center', 1.510147046136448)]
-BOUND IS 1.510147046136448
+Comparing crash with center
+Comparing crash with anywhere
+Comparing crash with crash
+Comparing crash with hypo55
+policy losses [('crash', 0.0), ('hypo55', 0.06551386324581993), ('anywhere', 0.07301155478797237), ('center', 0.2901921794698956)]
+BOUND IS 0.2901921794698956
+Comparing crash with center
+Comparing crash with center
+Comparing crash with center
+Comparing crash with center
+Comparing crash with center
 3 demonstrations
-percent improvements [('crash', 2.4509233169964606), ('hypo55', 2.1870596496947226), ('anywhere', 2.174697400185223), ('center', 1.7711105768902264)]
-BOUND IS 1.7711105768902264
+Comparing center with center
+Comparing center with anywhere
+Comparing center with crash
+Comparing center with hypo55
+policy losses [('crash', -0.36345668005241866), ('hypo55', -0.3203282278067171), ('anywhere', -0.2983553139975953), ('center', 0.0)]
+BOUND IS 0.0
+Comparing center with center
+Comparing center with center
+Comparing center with center
+Comparing center with center
+Comparing center with center
 4 demonstrations
-percent improvements [('crash', 2.4509233169964606), ('hypo55', 2.1870596496947226), ('anywhere', 2.174697400185223), ('center', 1.7711105768902264)]
-BOUND IS 1.7711105768902264
+Comparing center with center
+Comparing center with anywhere
+Comparing center with crash
+Comparing center with hypo55
+policy losses [('crash', -0.36345668005241866), ('hypo55', -0.3203282278067171), ('anywhere', -0.2983553139975953), ('center', 0.0)]
+BOUND IS 0.0
+Comparing center with center
+Comparing center with center
+Comparing center with center
+Comparing center with center
+Comparing center with center
 5 demonstrations
-percent improvements [('crash', 2.4509233169964606), ('hypo55', 2.1870596496947226), ('anywhere', 2.174697400185223), ('center', 1.7711105768902264)]
-BOUND IS 1.7711105768902264
+Comparing center with center
+Comparing center with anywhere
+Comparing center with crash
+Comparing center with hypo55
+policy losses [('crash', -0.36345668005241866), ('hypo55', -0.3203282278067171), ('anywhere', -0.2983553139975953), ('center', 0.0)]
+BOUND IS 0.0
+Comparing center with center
+Comparing center with center
+Comparing center with center
+Comparing center with center
+Comparing center with center
 NEW THRESHOLD 0.1
-Percent Improvements
-1.5593611979489144
-1.510147046136448
-1.7711105768902264
-1.7711105768902264
-1.7711105768902264
+Policy loss bounds
+0.0
+0.0
+0.0
 Num demos
-1
-2
 3
 4
 5
 Percent states
-0.2
-0.4
 0.6
 0.8
 1.0
 True EVDs
-0.23546590436942302
-0.2901921794698956
 0.0
 0.0
 0.0
@@ -44,33 +80,78 @@ Bound errors
 0.0
 0.0
 0.0
-0.0
-0.0
 Policy optimalities
 1
 1
 1
-1
-1
 Policy accuracies
-0.2974137931034483
-0.22844827586206898
 1.0
 1.0
 1.0
+PMFs
+[8.22673525e-01 1.77210282e-01 2.16784001e-05 9.45142185e-05]
+[9.38877417e-01 2.78765290e-07 3.07228543e-07 6.11219973e-02]
+[1.00000000e+00 3.20944226e-11 3.99703366e-13 5.21400268e-17]
+Learned reward functions
+center
+center
+center
 Confidence
 1.0
 Accuracy
 1.0
 Confusion matrices
-[[5, 0], [0, 0]]
+[[3, 0], [0, 2]]
 NEW THRESHOLD 0.2
-Percent Improvements
-1.5593611979489144
-1.510147046136448
-1.7711105768902264
-1.7711105768902264
-1.7711105768902264
+Policy loss bounds
+0.0
+0.0
+0.0
+Num demos
+3
+4
+5
+Percent states
+0.6
+0.8
+1.0
+True EVDs
+0.0
+0.0
+0.0
+Bound errors
+0.0
+0.0
+0.0
+Policy optimalities
+1
+1
+1
+Policy accuracies
+1.0
+1.0
+1.0
+PMFs
+[8.22673525e-01 1.77210282e-01 2.16784001e-05 9.45142185e-05]
+[9.38877417e-01 2.78765290e-07 3.07228543e-07 6.11219973e-02]
+[1.00000000e+00 3.20944226e-11 3.99703366e-13 5.21400268e-17]
+Learned reward functions
+center
+center
+center
+Confidence
+1.0
+Accuracy
+1.0
+Confusion matrices
+[[3, 0], [0, 2]]
+NEW THRESHOLD 0.3
+Policy loss bounds
+0.23546590436942302
+0.2901921794698956
+0.0
+0.0
+0.0
 Num demos
 1
 2
@@ -107,19 +188,31 @@ Policy accuracies
 1.0
 1.0
 1.0
+PMFs
+[0.0080806  0.00285479 0.00868147 0.98038314]
+[0.40704225 0.0044177  0.40905983 0.17948022]
+[8.22673525e-01 1.77210282e-01 2.16784001e-05 9.45142185e-05]
+[9.38877417e-01 2.78765290e-07 3.07228543e-07 6.11219973e-02]
+[1.00000000e+00 3.20944226e-11 3.99703366e-13 5.21400268e-17]
+Learned reward functions
+hypo55
+crash
+center
+center
+center
 Confidence
 1.0
 Accuracy
 1.0
 Confusion matrices
 [[5, 0], [0, 0]]
-NEW THRESHOLD 0.3
-Percent Improvements
-1.5593611979489144
-1.510147046136448
-1.7711105768902264
-1.7711105768902264
-1.7711105768902264
+NEW THRESHOLD 0.4
+Policy loss bounds
+0.23546590436942302
+0.2901921794698956
+0.0
+0.0
+0.0
 Num demos
 1
 2
@@ -156,6 +249,79 @@ Policy accuracies
 1.0
 1.0
 1.0
+PMFs
+[0.0080806  0.00285479 0.00868147 0.98038314]
+[0.40704225 0.0044177  0.40905983 0.17948022]
+[8.22673525e-01 1.77210282e-01 2.16784001e-05 9.45142185e-05]
+[9.38877417e-01 2.78765290e-07 3.07228543e-07 6.11219973e-02]
+[1.00000000e+00 3.20944226e-11 3.99703366e-13 5.21400268e-17]
+Learned reward functions
+hypo55
+crash
+center
+center
+center
+Confidence
+1.0
+Accuracy
+1.0
+Confusion matrices
+[[5, 0], [0, 0]]
+NEW THRESHOLD 0.5
+Policy loss bounds
+0.23546590436942302
+0.2901921794698956
+0.0
+0.0
+0.0
+Num demos
+1
+2
+3
+4
+5
+Percent states
+0.2
+0.4
+0.6
+0.8
+1.0
+True EVDs
+0.23546590436942302
+0.2901921794698956
+0.0
+0.0
+0.0
+Bound errors
+0.0
+0.0
+0.0
+0.0
+0.0
+Policy optimalities
+1
+1
+1
+1
+1
+Policy accuracies
+0.2974137931034483
+0.22844827586206898
+1.0
+1.0
+1.0
+PMFs
+[0.0080806  0.00285479 0.00868147 0.98038314]
+[0.40704225 0.0044177  0.40905983 0.17948022]
+[8.22673525e-01 1.77210282e-01 2.16784001e-05 9.45142185e-05]
+[9.38877417e-01 2.78765290e-07 3.07228543e-07 6.11219973e-02]
+[1.00000000e+00 3.20944226e-11 3.99703366e-13 5.21400268e-17]
+Learned reward functions
+hypo55
+crash
+center
+center
+center
 Confidence
 1.0
 Accuracy
@@ -168,4 +334,4 @@ anywhere [0, 0, -200, 0, 0, -50, 0, -200, 0, 5, 5]
 crash [0, 0, -300, 0, 0, -10, 0, -300, 0, 8, 8]
 hypo55 [0, 0, -111, 0, 0, -121, 0, -66, 0, 11, 11]
 **************************************************
-Time to run: 0.8103941957155864 minutes
+Time to run: 1.794001531600952 minutes

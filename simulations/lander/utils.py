@@ -8,7 +8,7 @@ beta = 10
 num_features = 11
 num_rollouts = 5
 
-type = "pairs"
+demo_type = "pairs"
 
 all_hypotheses = {}
 main_hypotheses = {
@@ -27,6 +27,7 @@ hypo_policies = pickle.load(open("hypothesis_policies.pkl", "rb"))
 main_policies = pickle.load(open("choices/optimal.pkl", "rb"))
 
 failed_hypotheses = ['hypo3', 'hypo8', 'hypo9', 'hypo11', 'hypo12', 'hypo13', 'hypo14', 'hypo15', 'hypo16', 'hypo17', 'hypo18', 'hypo20', 'hypo21', 'hypo24', 'hypo28', 'hypo29', 'hypo32', 'hypo33', 'hypo36', 'hypo38', 'hypo41', 'hypo43', 'hypo44', 'hypo46', 'hypo49', 'hypo51', 'hypo54', 'hypo60', 'hypo62', 'hypo64', 'hypo65', 'hypo67', 'hypo68', 'hypo70', 'hypo72', 'hypo77', 'hypo78', 'hypo80', 'hypo81', 'hypo83', 'hypo84', 'hypo85', 'hypo87', 'hypo88', 'hypo90', 'hypo91', 'hypo100', 'hypo102', 'hypo110', 'hypo111', 'hypo113', 'hypo119', 'hypo120', 'hypo122', 'hypo126', 'hypo129', 'hypo133', 'hypo141', 'hypo144', 'hypo145', 'hypo147', 'hypo153', 'hypo154', 'hypo164', 'hypo178', 'hypo189', 'hypo197']
+center_hypotheses = ['hypo{}'.format(idx) for idx in [69, 76, 55, 165, 106, 97, 152,1, 168, 6, 37, 103, 73, 25, 175, 136, 174, 94, 131, 95, 156, 151, 63, 50, 4, 79, 176, 101, 92]]
 
 # Everything is wrapped in one big array.
 # Each episode, aka policy/trajectory, is an array inside here.
@@ -49,9 +50,9 @@ Utility functions
 """
 def reward(policy, theta):
     depth = lambda L: isinstance(L, list) and max(map(depth, L)) + 1
-    type = "traj" if depth(policy) == 2 else "pairs" # pairs depth is 1
+    demo_type = "traj" if depth(policy) == 2 else "pairs" # pairs depth is 1
 
-    if type == "traj": # a "policy" here is one trajectory
+    if demo_type == "traj": # a "policy" here is one trajectory
         R = 0
         shaping = 0
         prev_shaping = None
@@ -91,7 +92,7 @@ def reward(policy, theta):
             #     reward -= 0.30
             R += reward
         return R / 100
-    elif type == "pairs": # a "policy" here is one state
+    elif demo_type == "pairs": # a "policy" here is one state
         state = policy[3]
         reward = 0
         features = np.array([
@@ -163,10 +164,18 @@ def generate_optimal_demos(num_demos, theta = "center"):
         demos = main_policies[theta]
     else:
         demos = hypo_policies[theta]
-    if type == "traj":
+    if demo_type == "traj":
         return demos[:num_demos]
-    elif type == "pairs":
+    elif demo_type == "pairs":
         return demos[0][:num_demos]
+
+def generate_bad_demos(num_demos, theta = "center"):
+    possible_thetas = ["center", "anywhere", "crash"]
+    demos = []
+    for i in range(num_demos):
+        theta = possible_thetas[i % len(possible_thetas)]
+        demos.append(main_policies[theta][0][i // len(possible_thetas)])
+    return demos
 
 
 def get_policy_rollouts(theta):
@@ -306,9 +315,9 @@ class BIRL:
         probs = []
         for theta in possible_rewards:
             demo_reward = np.array([reward(demo, theta) for demo in demos], dtype = np.float32)
-            if type == "traj":
+            if demo_type == "traj":
                 counter_reward = np.array([reward(demo, theta) for demo in possible_policies], dtype = np.float32)
-            elif type == "pairs":
+            elif demo_type == "pairs":
                 counters = [pp[np.random.choice(range(len(pp)))] for pp in possible_policies]
                 counter_reward = np.array([reward(demo, theta) for demo in counters], dtype = np.float32)
             n = np.exp(beta * sum(demo_reward))
@@ -419,10 +428,11 @@ class BIRL:
 """
 Demo sufficiency constants
 """
-possible_rewards = [key for key in main_hypotheses] + [key for key in alt_hypotheses if key not in failed_hypotheses][::7]
-# possible_rewards = ["center", "anywhere", "crash"] + ["hypo55"]
+# possible_rewards = [key for key in main_hypotheses] + [key for key in alt_hypotheses if key not in failed_hypotheses][::7]
+possible_rewards = ["anywhere", "crash"] + ["hypo101", "hypo55", "hypo69", "hypo76", "hypo92"]
 possible_policies = [get_optimal_policy(theta) for theta in possible_rewards]
 num_hypotheses = len(possible_rewards)
 
 # if __name__ == "__main__":
-    # print(len(possible_rewards))
+    # print(num_hypotheses)
+    # print(calculate_expected_value_difference("anywhere", "center", rn = True))
