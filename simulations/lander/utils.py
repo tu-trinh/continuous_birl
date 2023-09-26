@@ -216,12 +216,21 @@ def calculate_percent_improvement(map_sol, alt_theta, base_theta):
         return 0.0
     return imp
 
-def calculate_policy_accuracy(opt_policy, eval_policy, epsilon = 0.0001):
-    matches = 0
-    compare_length = min(len(opt_policy), len(eval_policy))
-    for i in range(compare_length):
-        matches += abs(eval_policy[i][1] - opt_policy[i][1]) < epsilon
-    return matches / len(opt_policy)
+def calculate_policy_accuracy(opt_policy_set, eval_policy_set, epsilon = 0.0001):
+    # Most likely, each "policy" is a policy set. So find the highest match between each policy set's policy
+    set_size = min(len(opt_policy_set), len(eval_policy_set))
+    best_acc = 0
+    for i in range(set_size):
+        opt_policy = opt_policy_set[i]
+        for j in range(set_size):
+            eval_policy = eval_policy_set[j]
+            matches = 0
+            compare_length = min(len(opt_policy), len(eval_policy))
+            for k in range(compare_length):
+                matches += abs(eval_policy[k][1] - opt_policy[k][1]) < epsilon
+            this_acc = matches / compare_length
+            best_acc = max(best_acc, this_acc)
+    return best_acc
 
 def comparison_grid(possible_policies):
     # possible_policies = [get_optimal_policy(pr, env.lava) for pr in possible_rewards]
