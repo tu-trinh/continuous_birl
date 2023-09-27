@@ -169,13 +169,20 @@ if __name__ == "__main__":
         # policy_accuracies = {threshold: [] for threshold in thresholds}
         # confidence = {threshold: set() for threshold in thresholds}
         accuracies = {threshold: [] for threshold in thresholds}
+        # Predicted by true
+        cm100 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is if optimality = 100%/99%
+        cm95 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is if optimality = 95%/96%
+        cm90 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is if optimality = 90%/92%
+        cm5 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.5
+        cm4 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.4
+        cm3 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.3
+        cm2 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.2
+        cm1 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.1
 
         for i in range(num_worlds):
             # print("DOING WORLD", i + 1)
             curr_map_sol = None
             patience = 0
-            start_comp = 0
-            done_with_demos = False
             birl = utils.BIRL(beta)
             for M in range(max_demos):
                 # print(M + 1, "demonstrations")
@@ -191,33 +198,96 @@ if __name__ == "__main__":
                 if curr_map_sol == map_sol:
                     patience += 1
                     # evaluate thresholds
-                    for t in range(len(thresholds[start_comp:])):
-                        threshold = thresholds[t + start_comp]
+                    for t in range(len(thresholds)):
+                        threshold = thresholds[t]
+                        opt_policy_set = utils.main_policies[true_theta]
+                        try:
+                            eval_policy_set = utils.hypo_policies[map_sol]
+                        except KeyError:
+                            eval_policy_set = utils.main_policies[map_sol]
+                        optimality = utils.calculate_policy_accuracy(opt_policy_set, eval_policy_set)
+                        actual_nevd = utils.calculate_expected_value_difference(map_sol, true_theta, rn = random_normalization)
                         if patience == threshold:
                             # store metrics
                             num_demos[threshold].append(M + 1)
                             # optimality = mdp_utils.calculate_percentage_optimal_actions(map_policy, env)
-                            opt_policy_set = utils.main_policies[true_theta]
-                            try:
-                                eval_policy_set = utils.hypo_policies[map_sol]
-                            except KeyError:
-                                eval_policy_set = utils.main_policies[map_sol]
-                            optimality = utils.calculate_policy_accuracy(opt_policy_set, eval_policy_set)
                             policy_optimalities[threshold].append(optimality)
                             # policy_accuracies[threshold].append(mdp_utils.calculate_policy_accuracy(policies[i], map_policy))
                             # confidence[threshold].add(i)
                             accuracies[threshold].append(optimality >= optimality_threshold)
                             curr_map_sol = map_sol
-                            if threshold == max(thresholds):
-                                done_with_demos = True
+                            # Evaluate actual positive by optimality
+                            if optimality >= 1.0:
+                                cm100[threshold][0][0] += 1
+                            else:
+                                cm100[threshold][0][1] += 1
+                            if optimality >= 0.95:
+                                cm95[threshold][0][0] += 1
+                            else:
+                                cm95[threshold][0][1] += 1
+                            if optimality >= 0.90:
+                                cm90[threshold][0][0] += 1
+                            else:
+                                cm90[threshold][0][1] += 1
+                            # Evaluate actual positive by nEVD
+                            if actual_nevd < 0.5:
+                                cm5[threshold][0][0] += 1
+                            else:
+                                cm5[threshold][0][1] += 1
+                            if actual_nevd < 0.4:
+                                cm4[threshold][0][0] += 1
+                            else:
+                                cm4[threshold][0][1] += 1
+                            if actual_nevd < 0.3:
+                                cm3[threshold][0][0] += 1
+                            else:
+                                cm3[threshold][0][1] += 1
+                            if actual_nevd < 0.2:
+                                cm2[threshold][0][0] += 1
+                            else:
+                                cm2[threshold][0][1] += 1
+                            if actual_nevd < 0.1:
+                                cm1[threshold][0][0] += 1
+                            else:
+                                cm1[threshold][0][1] += 1
                         else:
-                            start_comp += t
-                            break
+                            # Evaluate actual positive by optimality
+                            if optimality >= 1.0:
+                                cm100[threshold][1][0] += 1
+                            else:
+                                cm100[threshold][1][1] += 1
+                            if optimality >= 0.95:
+                                cm95[threshold][1][0] += 1
+                            else:
+                                cm95[threshold][1][1] += 1
+                            if optimality >= 0.90:
+                                cm90[threshold][1][0] += 1
+                            else:
+                                cm90[threshold][1][1] += 1
+                            # Evaluate actual positive by nEVD
+                            if actual_nevd < 0.5:
+                                cm5[threshold][1][0] += 1
+                            else:
+                                cm5[threshold][1][1] += 1
+                            if actual_nevd < 0.4:
+                                cm4[threshold][1][0] += 1
+                            else:
+                                cm4[threshold][1][1] += 1
+                            if actual_nevd < 0.3:
+                                cm3[threshold][1][0] += 1
+                            else:
+                                cm3[threshold][1][1] += 1
+                            if actual_nevd < 0.2:
+                                cm2[threshold][1][0] += 1
+                            else:
+                                cm2[threshold][1][1] += 1
+                            if actual_nevd < 0.1:
+                                cm1[threshold][1][0] += 1
+                            else:
+                                cm1[threshold][1][1] += 1
                 else:
                     patience = 0
                     curr_map_sol = map_sol
-                if done_with_demos:
-                    break
         
         # Output results for plotting
         for threshold in thresholds:
@@ -237,7 +307,26 @@ if __name__ == "__main__":
             # print("Confidence")
             # print(len(confidence[threshold]) / num_worlds)
             print("Accuracy")
-            print(sum(accuracies[threshold]) / num_worlds)
+            try:
+                print(sum(accuracies[threshold]) / len(accuracies[threshold]))
+            except ZeroDivisionError:
+                print(0.0)
+            print("CM100")
+            print(cm100[threshold])
+            print("CM95")
+            print(cm95[threshold])
+            print("CM90")
+            print(cm90[threshold])
+            print("CM5")
+            print(cm5[threshold])
+            print("CM4")
+            print(cm4[threshold])
+            print("CM3")
+            print(cm3[threshold])
+            print("CM2")
+            print(cm2[threshold])
+            print("CM1")
+            print(cm1[threshold])
             print("**************************************************")
     elif stopping_condition == "baseline": # stop learning once learned policy is some degree better than baseline policy
         # Experiment setup
@@ -353,7 +442,7 @@ if __name__ == "__main__":
         print("**************************************************")
     elif stopping_condition == "held_out":
         # Experiment setup
-        thresholds = [2, 3, 4, 5, 6]  # every X demo, add it to the set
+        thresholds = [3, 4, 5, 6, 7]  # every X demo, add it to the set
 
         # Metrics to evaluate thresholds
         num_demos = {threshold: [] for threshold in thresholds}
@@ -361,6 +450,15 @@ if __name__ == "__main__":
         accuracies = {threshold: [] for threshold in thresholds}
         total_demos = {threshold: [] for threshold in thresholds}
         held_out_sets = {threshold: [] for threshold in thresholds}
+        # Predicted by true
+        cm100 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is if optimality = 100%/99%
+        cm95 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is if optimality = 95%/96%
+        cm90 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is if optimality = 90%/92%
+        cm5 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.5
+        cm4 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.4
+        cm3 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.3
+        cm2 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.2
+        cm1 = {threshold: [[0, 0], [0, 0]] for threshold in thresholds}  # actual positive is with nEVD threshold = 0.1
 
         for i in range(num_worlds):
             demo_counter = 0
@@ -384,18 +482,89 @@ if __name__ == "__main__":
                         # print("Total demos length:", len(total_demos[threshold]))
                         map_pmf, map_sol = birl.birl(total_demos[threshold])
                         if len(held_out_sets[threshold]) >= 3:
-                            if map_sol == true_theta:
+                            done = map_sol == true_theta
+                            opt_policy_set = utils.main_policies[true_theta]
+                            try:
+                                eval_policy_set = utils.hypo_policies[map_sol]
+                            except KeyError:
+                                eval_policy_set = utils.main_policies[map_sol]
+                            optimality = utils.calculate_policy_accuracy(opt_policy_set, eval_policy_set)
+                            actual_nevd = utils.calculate_expected_value_difference(map_sol, true_theta, rn = random_normalization)
+                            if done:
                                 # store threshold metrics
                                 num_demos[threshold].append(M + 1)
-                                opt_policy_set = utils.main_policies[true_theta]
-                                try:
-                                    eval_policy_set = utils.hypo_policies[map_sol]
-                                except KeyError:
-                                    eval_policy_set = utils.main_policies[map_sol]
-                                optimality = utils.calculate_policy_accuracy(opt_policy_set, eval_policy_set)
                                 policy_optimalities[threshold].append(optimality)
                                 accuracies[threshold].append(optimality >= optimality_threshold)
-
+                                # Evaluate actual positive by optimality
+                                if optimality >= 1.0:
+                                    cm100[threshold][0][0] += 1
+                                else:
+                                    cm100[threshold][0][1] += 1
+                                if optimality >= 0.95:
+                                    cm95[threshold][0][0] += 1
+                                else:
+                                    cm95[threshold][0][1] += 1
+                                if optimality >= 0.90:
+                                    cm90[threshold][0][0] += 1
+                                else:
+                                    cm90[threshold][0][1] += 1
+                                # Evaluate actual positive by nEVD
+                                if actual_nevd < 0.5:
+                                    cm5[threshold][0][0] += 1
+                                else:
+                                    cm5[threshold][0][1] += 1
+                                if actual_nevd < 0.4:
+                                    cm4[threshold][0][0] += 1
+                                else:
+                                    cm4[threshold][0][1] += 1
+                                if actual_nevd < 0.3:
+                                    cm3[threshold][0][0] += 1
+                                else:
+                                    cm3[threshold][0][1] += 1
+                                if actual_nevd < 0.2:
+                                    cm2[threshold][0][0] += 1
+                                else:
+                                    cm2[threshold][0][1] += 1
+                                if actual_nevd < 0.1:
+                                    cm1[threshold][0][0] += 1
+                                else:
+                                    cm1[threshold][0][1] += 1
+                            else:
+                                # Evaluate actual positive by optimality
+                                if optimality >= 1.0:
+                                    cm100[threshold][1][0] += 1
+                                else:
+                                    cm100[threshold][1][1] += 1
+                                if optimality >= 0.95:
+                                    cm95[threshold][1][0] += 1
+                                else:
+                                    cm95[threshold][1][1] += 1
+                                if optimality >= 0.90:
+                                    cm90[threshold][1][0] += 1
+                                else:
+                                    cm90[threshold][1][1] += 1
+                                # Evaluate actual positive by nEVD
+                                if actual_nevd < 0.5:
+                                    cm5[threshold][1][0] += 1
+                                else:
+                                    cm5[threshold][1][1] += 1
+                                if actual_nevd < 0.4:
+                                    cm4[threshold][1][0] += 1
+                                else:
+                                    cm4[threshold][1][1] += 1
+                                if actual_nevd < 0.3:
+                                    cm3[threshold][1][0] += 1
+                                else:
+                                    cm3[threshold][1][1] += 1
+                                if actual_nevd < 0.2:
+                                    cm2[threshold][1][0] += 1
+                                else:
+                                    cm2[threshold][1][1] += 1
+                                if actual_nevd < 0.1:
+                                    cm1[threshold][1][0] += 1
+                                else:
+                                    cm1[threshold][1][1] += 1
+                                
         # Output results for plotting
         for threshold in thresholds:
             print("NEW THRESHOLD", threshold)
@@ -410,6 +579,22 @@ if __name__ == "__main__":
                 print(sum(accuracies[threshold]) / len(accuracies[threshold]))
             else:
                 print(0.0)
+            print("CM100")
+            print(cm100[threshold])
+            print("CM95")
+            print(cm95[threshold])
+            print("CM90")
+            print(cm90[threshold])
+            print("CM5")
+            print(cm5[threshold])
+            print("CM4")
+            print(cm4[threshold])
+            print("CM3")
+            print(cm3[threshold])
+            print("CM2")
+            print(cm2[threshold])
+            print("CM1")
+            print(cm1[threshold])
         # print("Reward hypotheses")
         # for pr in utils.possible_rewards:
         #     print(pr, utils.all_hypotheses[pr])
