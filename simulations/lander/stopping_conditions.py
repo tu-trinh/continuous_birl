@@ -38,7 +38,7 @@ if __name__ == "__main__":
     random_normalization = True if rand_norm == "true" else False # whether or not to normalize with random policy
     # adaptive = True # whether or not to use adaptive step size
     num_worlds = 20
-    max_demos = 25
+    max_demos = 20
     true_theta = "anywhere" # assume lander wants to land in center
     utils.generate_random_policies()
 
@@ -99,8 +99,14 @@ if __name__ == "__main__":
                         pct_states[threshold].append((M + 1) / max_demos)
                         true_evds[threshold].append(map_evd)
                         avg_bound_errors[threshold].append(avar_bound - map_evd)
+                        opt_policy_set = utils.main_policies[true_theta]
                         policy_optimalities[threshold].append(1)
-                        policy_accuracies[threshold].append(utils.calculate_policy_accuracy(utils.possible_policies[utils.possible_rewards.index(true_theta)], utils.possible_policies[np.argmax(map_pmf)]))
+                        try:
+                            eval_policy_set = utils.hypo_policies[map_sol]
+                        except KeyError:
+                            eval_policy_set = utils.main_policies[map_sol]
+                        policy_accuracies[threshold].append(utils.calculate_policy_accuracy(opt_policy_set, eval_policy_set))
+                        # policy_accuracies[threshold].append(utils.calculate_policy_accuracy(utils.possible_policies[utils.possible_rewards.index(true_theta)], utils.possible_policies[np.argmax(map_pmf)]))
                         confidence[threshold].add(i)
                         accuracies[threshold].append(avar_bound >= map_evd)
                         pmfs[threshold].append(map_pmf)
